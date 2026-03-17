@@ -578,10 +578,49 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-size: 0.9rem;
   color: var(--secondary);
 }
+.saver-action {
+  font-weight: 400;
+  color: var(--text-medium);
+}
+.saver-highlight {
+  color: var(--primary);
+  font-weight: 700;
+}
+.saver-time {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
 .saver-amount {
   font-size: 0.8rem;
   color: var(--primary);
 }
+
+/* Social Feed Styling */
+.social-feed {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+.social-feed h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.feed-card {
+  background: transparent;
+  border-radius: 0;
+  padding: 12px 0;
+}
+.feed-divider {
+  height: 1px;
+  background: var(--gray-200);
+  margin: 0;
+}
+
 .popular-cta {
   text-align: center;
 }
