@@ -212,7 +212,8 @@ async def create_user(user: UserCreate):
     }
     
     await db.users.insert_one(user_doc)
-    del user_doc["_id"] if "_id" in user_doc else None
+    if "_id" in user_doc:
+        del user_doc["_id"]
     return UserResponse(**user_doc)
 
 @api_router.get("/users/{user_id}", response_model=UserResponse)
