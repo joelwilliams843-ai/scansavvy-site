@@ -1804,3 +1804,71 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .privacy-container a {
   color: var(--primary);
 }
+
+
+/* Quick Bundle Page - Minimal additions */
+.store-selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.selected-stores-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.store-chip-small {
+  padding: 4px 10px;
+  background: var(--primary-light);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+.btn-text-small {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.btn-text-small:hover {
+  text-decoration: underline;
+}
+.store-selector-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+.store-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.store-btn:hover {
+  border-color: var(--primary);
+}
+.store-btn.selected {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.check-mark {
+  font-weight: bold;
+}
