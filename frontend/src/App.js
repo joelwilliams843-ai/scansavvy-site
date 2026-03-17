@@ -39,6 +39,14 @@ const Header = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  const scrollToSection = (e, sectionId) => {
+    e.preventDefault();
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+  
   return (
     <header className="header">
       <nav className="navbar">
@@ -49,9 +57,9 @@ const Header = ({ user, onLogout }) => {
         
         {!user && location.pathname === "/" && (
           <div className="nav-links">
-            <a href="#how-it-works">How It Works</a>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
+            <a href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')}>How It Works</a>
+            <a href="#features" onClick={(e) => scrollToSection(e, 'features')}>Features</a>
+            <a href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')}>Pricing</a>
           </div>
         )}
         
