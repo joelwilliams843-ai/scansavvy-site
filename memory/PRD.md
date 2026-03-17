@@ -27,7 +27,7 @@ ScanSavvy is a smart savings assistant that automatically delivers weekly coupon
 
 ### URL Structure
 ```
-https://weekly-savings-1.preview.emergentagent.com/api/bundle/{bundle_id}/view
+https://qrcode-bundle-demo.preview.emergentagent.com/api/bundle/{bundle_id}/view
 ```
 
 ### QR Scan Behavior
