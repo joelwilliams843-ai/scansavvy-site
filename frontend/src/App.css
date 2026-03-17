@@ -908,6 +908,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .light-footer .footer-bottom-bar { border-top-color: var(--border); }
 .footer-bottom-bar p { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
 .light-footer .footer-bottom-bar p { color: var(--text-light); }
+.mjv-link { 
+  color: var(--primary); 
+  text-decoration: underline; 
+  transition: opacity 0.2s;
+}
+.mjv-link:hover { opacity: 0.8; }
 
 /* ============== MODAL ============== */
 .modal-overlay {
