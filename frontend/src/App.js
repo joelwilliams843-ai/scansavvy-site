@@ -129,127 +129,292 @@ const QRCodeDisplay = ({ data, size = 200 }) => {
 // ============== PAGES ==============
 
 const HomePage = ({ onGetStarted }) => {
+  // Store logo data with real brand colors
+  const storeLogos = [
+    { name: "Walmart", color: "#0071CE", letter: "W" },
+    { name: "Target", color: "#CC0000", letter: "T" },
+    { name: "Kroger", color: "#0D47A1", letter: "K" },
+    { name: "CVS", color: "#CC0000", letter: "CVS" },
+    { name: "Walgreens", color: "#E31837", letter: "W" },
+    { name: "Costco", color: "#E31837", letter: "C" },
+    { name: "Publix", color: "#3B8C3B", letter: "P" },
+    { name: "Aldi", color: "#00529B", letter: "A" },
+  ];
+
   return (
     <main className="home-page">
-      {/* Hero Section */}
+      {/* Hero Section - Polished */}
       <section className="hero">
         <div className="hero-content">
-          <h2 data-testid="hero-title">Pick Your Stores.<br/>Get Every Coupon Sent to Your Phone.</h2>
+          <div className="hero-badge">
+            <span>🎉</span> Over $2M saved by ScanSavvy users
+          </div>
+          <h2 data-testid="hero-title">All Your Coupons.<br/>One QR Code.</h2>
           <p data-testid="hero-subtitle">
-            Select the stores you shop at most. ScanSavvy collects all available coupons and delivers them 
-            automatically as a weekly QR code bundle. Just scan at checkout and save.
+            Choose your favorite stores and brands. ScanSavvy sends deals directly to your phone every week. At checkout, just scan once and save.
           </p>
           <div className="hero-actions">
             <button className="btn-primary btn-large" onClick={onGetStarted} data-testid="hero-cta">
-              Get My Coupons
+              Start Saving Now
             </button>
-            <a href="#how-it-works" className="btn-secondary btn-large" data-testid="hero-learn-more">
-              See How It Works
+            <a href="#how-it-works" className="btn-ghost btn-large" data-testid="hero-learn-more">
+              See How It Works →
             </a>
           </div>
           <div className="hero-trust">
-            <span className="trust-badge">✓ Free to start</span>
-            <span className="trust-badge">✓ Updates weekly</span>
-            <span className="trust-badge">✓ Works at 20+ stores</span>
+            <div className="trust-item">
+              <span className="trust-check">✓</span>
+              <span>Free forever plan</span>
+            </div>
+            <div className="trust-item">
+              <span className="trust-check">✓</span>
+              <span>No credit card required</span>
+            </div>
+            <div className="trust-item">
+              <span className="trust-check">✓</span>
+              <span>Works at 20+ stores</span>
+            </div>
           </div>
         </div>
         <div className="hero-visual">
-          <div className="phone-mockup">
-            <div className="phone-screen">
-              <div className="qr-preview">
-                <QRCodeDisplay data="SCANSAVVY-DEMO-2024" size={180} />
-                <div className="qr-label">Your Weekly Coupons</div>
-              </div>
-              <div className="coupon-preview-list">
-                <div className="coupon-mini"><span>Target</span><span className="savings">$12.50 savings</span></div>
-                <div className="coupon-mini"><span>Walmart</span><span className="savings">$8.75 savings</span></div>
-                <div className="coupon-mini"><span>CVS</span><span className="savings">$5.00 savings</span></div>
+          <div className="hero-phone-container">
+            <div className="phone-glow"></div>
+            <div className="phone-mockup">
+              <div className="phone-notch"></div>
+              <div className="phone-screen">
+                <div className="phone-header">
+                  <span className="phone-time">9:41</span>
+                  <div className="phone-status">
+                    <span>📶</span>
+                    <span>🔋</span>
+                  </div>
+                </div>
+                <div className="app-header">
+                  <img src="/assets/scansavvy-logo.png" alt="" className="app-logo-mini" />
+                  <span>My Coupons</span>
+                </div>
+                <div className="qr-card-preview">
+                  <div className="qr-card-header">
+                    <span className="qr-store-icon">🎯</span>
+                    <div className="qr-store-info">
+                      <span className="qr-store-name">Target</span>
+                      <span className="qr-store-count">12 coupons ready</span>
+                    </div>
+                  </div>
+                  <div className="qr-code-wrapper">
+                    <QRCodeDisplay data="SCANSAVVY-TARGET-2024" size={140} />
+                  </div>
+                  <div className="qr-card-footer">
+                    <span className="qr-savings">Save up to $24.50</span>
+                    <span className="qr-expiry">Valid this week</span>
+                  </div>
+                </div>
+                <div className="more-stores-preview">
+                  <div className="store-pill walmart">
+                    <span>🛒</span> Walmart
+                    <span className="pill-badge">8</span>
+                  </div>
+                  <div className="store-pill cvs">
+                    <span>💊</span> CVS
+                    <span className="pill-badge">5</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="floating-notification">
-            <div className="notif-icon">🔔</div>
-            <div className="notif-text">
-              <strong>Your weekly savings are ready!</strong>
-              <span>15 new coupons for your stores</span>
+          <div className="floating-notification slide-in">
+            <div className="notif-dot"></div>
+            <div className="notif-content">
+              <strong>Your weekly coupons are ready!</strong>
+              <span>$47.25 in savings waiting for you</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Value Prop */}
-      <section className="value-banner">
-        <p>All your store coupons. One weekly QR code. Zero effort.</p>
+      {/* Store Logos Section */}
+      <section className="stores-banner">
+        <p className="stores-label">Works with your favorite stores</p>
+        <div className="store-logos-row">
+          {storeLogos.map((store, i) => (
+            <div key={i} className="store-logo-item" style={{'--brand-color': store.color}}>
+              <div className="store-logo-circle">
+                <span>{store.letter}</span>
+              </div>
+              <span className="store-logo-name">{store.name}</span>
+            </div>
+          ))}
+          <div className="store-logo-item more">
+            <div className="store-logo-circle">
+              <span>+12</span>
+            </div>
+            <span className="store-logo-name">more</span>
+          </div>
+        </div>
       </section>
 
-      {/* How It Works */}
+      {/* How It Works - Simplified */}
       <section className="how-it-works" id="how-it-works">
-        <h2 className="section-title" data-testid="how-it-works-title">How It Works</h2>
+        <div className="section-header">
+          <span className="section-label">Simple Process</span>
+          <h2 className="section-title" data-testid="how-it-works-title">How ScanSavvy Works</h2>
+          <p className="section-subtitle">Three simple steps to start saving every week</p>
+        </div>
         <div className="steps-container">
-          <div className="step" data-testid="step-1">
-            <div className="step-number">1</div>
-            <div className="step-icon">🏪</div>
+          <div className="step-card" data-testid="step-1">
+            <div className="step-number-badge">1</div>
+            <div className="step-visual">
+              <div className="step-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+            </div>
             <h3>Pick Your Stores</h3>
-            <p>Select from Walmart, Target, Kroger, CVS, and 20+ other stores you actually shop at.</p>
+            <p>Select from Walmart, Target, Kroger, CVS, and 20+ other stores you shop at regularly.</p>
           </div>
-          <div className="step-arrow">→</div>
-          <div className="step" data-testid="step-2">
-            <div className="step-number">2</div>
-            <div className="step-icon">📲</div>
-            <h3>Get Your QR Bundle</h3>
-            <p>We collect ALL available coupons for your stores and bundle them into one QR code, updated weekly.</p>
+          <div className="step-connector">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
           </div>
-          <div className="step-arrow">→</div>
-          <div className="step" data-testid="step-3">
-            <div className="step-number">3</div>
-            <div className="step-icon">💰</div>
+          <div className="step-card" data-testid="step-2">
+            <div className="step-number-badge">2</div>
+            <div className="step-visual">
+              <div className="step-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <rect x="7" y="7" width="3" height="3"/>
+                  <rect x="14" y="7" width="3" height="3"/>
+                  <rect x="7" y="14" width="3" height="3"/>
+                  <rect x="14" y="14" width="3" height="3"/>
+                </svg>
+              </div>
+            </div>
+            <h3>Get Your QR Code</h3>
+            <p>We bundle ALL available coupons for your stores into one QR code, delivered to you weekly.</p>
+          </div>
+          <div className="step-connector">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+          <div className="step-card" data-testid="step-3">
+            <div className="step-number-badge">3</div>
+            <div className="step-visual">
+              <div className="step-icon-box green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+            </div>
             <h3>Scan & Save</h3>
-            <p>Show your QR code at checkout. The savings apply automatically. That's it.</p>
+            <p>At checkout, show your QR code. All your coupons apply instantly. That's it!</p>
           </div>
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features - Cleaner Grid */}
       <section className="features" id="features">
-        <h2 className="section-title" data-testid="features-title">Why ScanSavvy?</h2>
+        <div className="section-header">
+          <span className="section-label">Why Choose Us</span>
+          <h2 className="section-title" data-testid="features-title">Everything You Need to Save</h2>
+        </div>
         <div className="features-grid">
           <div className="feature-card" data-testid="feature-automatic">
-            <div className="feature-icon">🔄</div>
-            <h3>Automatic Weekly Updates</h3>
-            <p>Your coupons refresh every week with the newest deals—no searching, no clipping.</p>
+            <div className="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+            </div>
+            <h3>Automatic Updates</h3>
+            <p>Fresh coupons delivered to you every week. No searching required.</p>
           </div>
           <div className="feature-card" data-testid="feature-all-coupons">
-            <div className="feature-icon">📋</div>
-            <h3>Every Available Coupon</h3>
-            <p>We bundle ALL store coupons together. No more missing deals you didn't know about.</p>
+            <div className="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M3 9h18M9 21V9"/>
+              </svg>
+            </div>
+            <h3>Every Coupon</h3>
+            <p>We find ALL available coupons—never miss a deal again.</p>
           </div>
           <div className="feature-card" data-testid="feature-one-qr">
-            <div className="feature-icon">📱</div>
-            <h3>One QR Code Per Store</h3>
-            <p>One scan applies all your coupons. Simple, fast, and works at checkout.</p>
+            <div className="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+              </svg>
+            </div>
+            <h3>One QR Code</h3>
+            <p>All your coupons in a single scan. Fast and effortless checkout.</p>
           </div>
           <div className="feature-card" data-testid="feature-manufacturer">
-            <div className="feature-icon">🏭</div>
-            <h3>Manufacturer Coupons</h3>
-            <p>Opt in to receive extra brand coupons that work at any retailer—even more savings.</p>
+            <div className="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 7h-9"/>
+                <path d="M14 17H5"/>
+                <circle cx="17" cy="17" r="3"/>
+                <circle cx="7" cy="7" r="3"/>
+              </svg>
+            </div>
+            <h3>Brand Coupons</h3>
+            <p>Manufacturer coupons from top brands—extra savings everywhere.</p>
           </div>
           <div className="feature-card" data-testid="feature-notifications">
-            <div className="feature-icon">🔔</div>
-            <h3>Get Notified Your Way</h3>
-            <p>Receive your weekly bundle via text, push notification, or email—your choice.</p>
+            <div className="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+              </svg>
+            </div>
+            <h3>Smart Alerts</h3>
+            <p>Get notified via push, text, or email—your choice.</p>
           </div>
           <div className="feature-card" data-testid="feature-easy">
-            <div className="feature-icon">✨</div>
-            <h3>Effortless Savings</h3>
-            <p>Set it once and forget it. Your coupons come to you automatically.</p>
+            <div className="feature-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <h3>Zero Effort</h3>
+            <p>Set it once, forget it. Savings come to you automatically.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="social-proof">
+        <div className="proof-stats">
+          <div className="stat-item">
+            <span className="stat-number">50K+</span>
+            <span className="stat-label">Active Users</span>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <span className="stat-number">$2M+</span>
+            <span className="stat-label">Saved This Year</span>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-item">
+            <span className="stat-number">4.8★</span>
+            <span className="stat-label">App Store Rating</span>
           </div>
         </div>
       </section>
 
       {/* Pricing */}
       <section className="pricing" id="pricing">
-        <h2 className="section-title" data-testid="pricing-title">Simple, Affordable Pricing</h2>
-        <p className="pricing-subtitle">Save way more than the cost of any plan.</p>
+        <div className="section-header">
+          <span className="section-label">Pricing</span>
+          <h2 className="section-title" data-testid="pricing-title">Simple, Transparent Pricing</h2>
+          <p className="section-subtitle">Save more than the cost of any plan, guaranteed.</p>
+        </div>
         <div className="pricing-cards">
           <div className="pricing-card" data-testid="pricing-free">
             <h3>Free</h3>
@@ -259,9 +424,9 @@ const HomePage = ({ onGetStarted }) => {
               <li>Up to 3 store selections</li>
               <li>Weekly QR code bundles</li>
               <li>Push notifications</li>
-              <li>Basic dashboard</li>
+              <li>Basic savings dashboard</li>
             </ul>
-            <button className="btn-secondary" onClick={onGetStarted}>Start Free</button>
+            <button className="btn-secondary btn-full" onClick={onGetStarted}>Get Started Free</button>
           </div>
           <div className="pricing-card featured" data-testid="pricing-premium">
             <div className="popular-badge">Most Popular</div>
@@ -276,7 +441,7 @@ const HomePage = ({ onGetStarted }) => {
               <li>Priority new coupon alerts</li>
               <li>Full savings dashboard</li>
             </ul>
-            <button className="btn-primary" onClick={onGetStarted}>Get Premium</button>
+            <button className="btn-primary btn-full" onClick={onGetStarted}>Start 14-Day Trial</button>
           </div>
           <div className="pricing-card" data-testid="pricing-family">
             <h3>Family</h3>
@@ -289,19 +454,20 @@ const HomePage = ({ onGetStarted }) => {
               <li>Family savings tracking</li>
               <li>Household spending insights</li>
             </ul>
-            <button className="btn-secondary" onClick={onGetStarted}>Get Family</button>
+            <button className="btn-secondary btn-full" onClick={onGetStarted}>Get Family Plan</button>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Final CTA */}
       <section className="cta-section">
         <div className="cta-content">
-          <h2 data-testid="cta-title">Ready to Save Without the Hassle?</h2>
-          <p>Pick your stores in 30 seconds. Start getting your weekly coupon bundles.</p>
-          <button className="btn-primary btn-large" onClick={onGetStarted} data-testid="cta-button">
-            Get Started Free
+          <h2 data-testid="cta-title">Start Saving in 30 Seconds</h2>
+          <p>Pick your stores, get your QR code, and never clip another coupon again.</p>
+          <button className="btn-primary btn-large btn-white" onClick={onGetStarted} data-testid="cta-button">
+            Get Your Free Coupons
           </button>
+          <span className="cta-note">No credit card required • Free forever plan available</span>
         </div>
       </section>
 
@@ -310,18 +476,10 @@ const HomePage = ({ onGetStarted }) => {
         <div className="footer-content">
           <div className="footer-brand">
             <div className="logo-container">
-              <div className="logo-icon small">
-                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="40" height="40" rx="10" fill="#3EBCAB"/>
-                  <rect x="8" y="8" width="10" height="10" rx="2" fill="white"/>
-                  <rect x="22" y="8" width="10" height="10" rx="2" fill="white"/>
-                  <rect x="8" y="22" width="10" height="10" rx="2" fill="white"/>
-                  <rect x="22" y="22" width="6" height="6" rx="1" fill="white"/>
-                </svg>
-              </div>
+              <img src="/assets/scansavvy-logo.png" alt="ScanSavvy" className="footer-logo" />
               <span>ScanSavvy</span>
             </div>
-            <p>Your coupons, delivered automatically.</p>
+            <p>All your coupons. One QR code.</p>
           </div>
           <div className="footer-links">
             <div className="footer-col">
@@ -333,12 +491,12 @@ const HomePage = ({ onGetStarted }) => {
             <div className="footer-col">
               <h4>Support</h4>
               <a href="#">Help Center</a>
-              <a href="#">Contact</a>
+              <a href="#">Contact Us</a>
             </div>
             <div className="footer-col">
               <h4>Legal</h4>
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
+              <a href="#">Privacy Policy</a>
+              <a href="#">Terms of Service</a>
             </div>
           </div>
         </div>
