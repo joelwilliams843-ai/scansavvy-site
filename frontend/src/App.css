@@ -1013,15 +1013,22 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .option-info p { font-size: 0.85rem; color: var(--text-medium); }
 
 /* Toggle */
-.toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
-.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; cursor: pointer; }
+.toggle input { 
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
 .toggle-slider {
   position: absolute;
   inset: 0;
   background: var(--gray-300);
   border-radius: 28px;
-  cursor: pointer;
   transition: background 0.2s;
+  pointer-events: none;
 }
 .toggle-slider::before {
   content: '';
