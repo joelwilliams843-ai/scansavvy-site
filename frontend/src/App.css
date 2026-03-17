@@ -1353,10 +1353,272 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 /* Empty State */
 .empty-state { text-align: center; padding: 48px; background: var(--white); border-radius: var(--radius-lg); }
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+.empty-state h3 { font-size: 1.25rem; font-weight: 600; color: var(--secondary); margin-bottom: 8px; }
 .empty-state p { color: var(--text-medium); margin-bottom: 16px; }
 
 /* Loading */
 .loading-spinner { text-align: center; padding: 64px; color: var(--text-medium); }
+
+/* ============== MASTER BUNDLE CARD ============== */
+.master-bundle-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: var(--shadow-md);
+}
+.bundle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.bundle-week {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bundle-week .week-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary);
+}
+.bundle-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+.bundle-expiry {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  text-align: right;
+}
+
+/* QR Section */
+.qr-section {
+  text-align: center;
+  padding: 32px;
+  background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-light) 100%);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+.qr-wrapper {
+  display: inline-block;
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 16px;
+}
+.qr-instruction {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+/* Bundle Stats */
+.bundle-stats {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.stat-text {
+  font-size: 0.85rem;
+  color: var(--text-medium);
+}
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+/* Stores Included */
+.stores-included {
+  margin-bottom: 24px;
+}
+.stores-included h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 12px;
+}
+.store-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.store-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  color: var(--text-dark);
+}
+.store-tag.manufacturer {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+/* Bundle Actions */
+.bundle-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.bundle-actions .btn-secondary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.refresh-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 12px;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+.refresh-btn:hover {
+  color: var(--primary);
+}
+
+/* Coupon List Section */
+.coupon-list-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.coupon-list-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 16px;
+}
+.coupon-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.coupon-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+}
+.coupon-item:last-child { margin-bottom: 0; }
+.coupon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.coupon-store {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.coupon-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--secondary);
+}
+.coupon-desc {
+  font-size: 0.8rem;
+  color: var(--text-medium);
+}
+.coupon-savings {
+  background: var(--primary);
+  color: white;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+/* Tier Badge */
+.tier-badge {
+  font-size: 0.85rem;
+  color: var(--text-medium);
+}
+
+/* Account Info */
+.account-info {
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.account-info p {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+.account-info p:last-child { margin-bottom: 0; }
+.account-info strong {
+  color: var(--secondary);
+}
+
+/* Logo text styling */
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+/* Partner logos */
+.partner-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-medium);
+}
+
+/* Store count badge in phone demo */
+.store-count-badge {
+  text-align: center;
+  padding: 8px;
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+/* Week badge in phone demo */
+.week-badge {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 600;
+}
 
 /* Hide any external badges */
 #emergent-badge, [id*="emergent"], a[href*="emergent"] { display: none !important; }
