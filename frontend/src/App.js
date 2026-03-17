@@ -172,7 +172,7 @@ const HomePage = ({ onGetStarted }) => {
                   <span className="week-badge">Week of March 17</span>
                 </div>
                 <div className="qr-demo">
-                  <QRCodeGenerator url="demo-bundle-preview" size={130} />
+                  <QRCodeSVG value="https://scansavvy.app" size={100} bgColor="#FFFFFF" fgColor="#000000" />
                 </div>
                 <div className="card-savings">
                   <span className="savings-amount">$47.50</span>
