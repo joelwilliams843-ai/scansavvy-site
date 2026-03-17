@@ -412,6 +412,171 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   color: var(--text-medium);
 }
 
+/* Popular in Your Area Section */
+.popular-section {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  background: var(--white);
+}
+.popular-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+.popular-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 20px;
+}
+.popular-heading svg {
+  color: var(--primary);
+}
+
+/* Trending Deals */
+.deal-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.deal-card {
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: relative;
+  transition: all 0.2s;
+}
+.deal-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.deal-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.deal-badge.hot {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+.deal-badge.new {
+  background: #DBEAFE;
+  color: #2563EB;
+}
+.deal-store-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+.deal-offer {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary);
+  margin-bottom: 4px;
+}
+.deal-desc {
+  font-size: 0.85rem;
+  color: var(--text-medium);
+  margin-bottom: 12px;
+}
+.deal-claimed {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.deal-claimed::before {
+  content: '🔥';
+  font-size: 0.7rem;
+}
+
+/* Local Stats */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--primary-light);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  text-align: center;
+}
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 4px;
+}
+.stat-card .stat-label {
+  font-size: 0.75rem;
+  color: var(--text-medium);
+}
+
+/* Top Savers */
+.top-savers h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 16px;
+}
+.saver-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.saver-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+}
+.saver-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.saver-info {
+  display: flex;
+  flex-direction: column;
+}
+.saver-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+.saver-amount {
+  font-size: 0.8rem;
+  color: var(--primary);
+}
+.popular-cta {
+  text-align: center;
+}
+
 /* How It Works */
 .how-it-works {
   max-width: 1140px;
