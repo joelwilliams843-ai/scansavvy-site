@@ -304,28 +304,38 @@ const HomePage = ({ onGetStarted }) => {
               </div>
             </div>
             
-            <div className="top-savers">
-              <h4>Top Savers Near You</h4>
+            <div className="top-savers social-feed">
+              <h4>Activity Near You</h4>
               <div className="saver-list">
-                <div className="saver-item">
-                  <div className="saver-avatar">S</div>
+                <div className="saver-item feed-card">
+                  <div className="saver-avatar" style={{backgroundColor: '#2FBFA5'}}>S</div>
                   <div className="saver-info">
-                    <span className="saver-name">Sarah M.</span>
-                    <span className="saver-amount">Saved $156 this month</span>
+                    <span className="saver-name">Sarah M. <span className="saver-action">saved</span> <span className="saver-highlight">$156</span></span>
+                    <span className="saver-time">this month at Target, Kroger</span>
                   </div>
                 </div>
-                <div className="saver-item">
-                  <div className="saver-avatar">J</div>
+                <div className="feed-divider"></div>
+                <div className="saver-item feed-card">
+                  <div className="saver-avatar" style={{backgroundColor: '#1F2A44'}}>J</div>
                   <div className="saver-info">
-                    <span className="saver-name">James T.</span>
-                    <span className="saver-amount">Saved $142 this month</span>
+                    <span className="saver-name">James T. <span className="saver-action">saved</span> <span className="saver-highlight">$142</span></span>
+                    <span className="saver-time">this month at Walmart, CVS</span>
                   </div>
                 </div>
-                <div className="saver-item">
-                  <div className="saver-avatar">M</div>
+                <div className="feed-divider"></div>
+                <div className="saver-item feed-card">
+                  <div className="saver-avatar" style={{backgroundColor: '#2FBFA5'}}>M</div>
                   <div className="saver-info">
-                    <span className="saver-name">Maria L.</span>
-                    <span className="saver-amount">Saved $128 this month</span>
+                    <span className="saver-name">Maria L. <span className="saver-action">saved</span> <span className="saver-highlight">$128</span></span>
+                    <span className="saver-time">this month at Publix, Costco</span>
+                  </div>
+                </div>
+                <div className="feed-divider"></div>
+                <div className="saver-item feed-card">
+                  <div className="saver-avatar" style={{backgroundColor: '#1F2A44'}}>D</div>
+                  <div className="saver-info">
+                    <span className="saver-name">David R. <span className="saver-action">saved</span> <span className="saver-highlight">$98</span></span>
+                    <span className="saver-time">this week at Walgreens, ALDI</span>
                   </div>
                 </div>
               </div>
