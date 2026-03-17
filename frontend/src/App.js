@@ -208,11 +208,30 @@ const HomePage = ({ onGetStarted }) => {
       <section className="partners-section">
         <p className="partners-label">Coupons available at these stores and more</p>
         <div className="partners-logos">
-          {["Walmart", "Target", "Kroger", "CVS", "Walgreens", "Costco", "Publix", "ALDI"].map((name, i) => (
-            <div key={i} className="partner-logo">
-              <span className="partner-name">{name}</span>
-            </div>
-          ))}
+          <div className="partner-logo" style={{backgroundColor: '#0071DC'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>Walmart</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#CC0000'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>Target</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#0C3E80'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>Kroger</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#CC0000'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>CVS</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#E31837'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>Walgreens</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#E31837'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>Costco</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#3B8C3B'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>Publix</span>
+          </div>
+          <div className="partner-logo" style={{backgroundColor: '#00529B'}}>
+            <span className="partner-name" style={{color: 'white', fontWeight: '700'}}>ALDI</span>
+          </div>
         </div>
         <p className="partners-count">+ 12 more retailers</p>
       </section>
