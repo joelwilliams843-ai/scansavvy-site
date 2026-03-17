@@ -1663,4 +1663,11 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   .modal-content { padding: 28px 20px; }
   .store-grid { grid-template-columns: repeat(3, 1fr); }
   .onboarding-step { padding: 28px 20px; }
+  .master-bundle-card { padding: 20px; }
+  .bundle-header { flex-direction: column; }
+  .bundle-expiry { text-align: left; }
+  .bundle-stats { gap: 12px; }
+  .stat-number { font-size: 1.4rem; }
+  .bundle-actions { flex-direction: column; }
+  .qr-section { padding: 20px; }
 }
