@@ -1390,6 +1390,44 @@ const DashboardPage = ({ user, onUpdateUser }) => {
   );
 };
 
+// Privacy Page
+const PrivacyPage = () => {
+  return (
+    <div className="privacy-page">
+      <div className="privacy-container">
+        <h1>Privacy Policy</h1>
+        <p className="last-updated">Last updated: March 2026</p>
+        
+        <section>
+          <h2>Information We Collect</h2>
+          <p>We collect information you provide directly, including your name, email address, and store preferences to deliver personalized coupon bundles.</p>
+        </section>
+        
+        <section>
+          <h2>How We Use Your Information</h2>
+          <p>We use your information to:</p>
+          <ul>
+            <li>Generate personalized weekly coupon bundles</li>
+            <li>Send notifications when new bundles are ready</li>
+            <li>Improve our coupon recommendations</li>
+            <li>Provide customer support</li>
+          </ul>
+        </section>
+        
+        <section>
+          <h2>Data Security</h2>
+          <p>We implement industry-standard security measures to protect your personal information.</p>
+        </section>
+        
+        <section>
+          <h2>Contact Us</h2>
+          <p>For privacy-related questions, contact us at <a href="mailto:privacy@scansavvy.com">privacy@scansavvy.com</a></p>
+        </section>
+      </div>
+    </div>
+  );
+};
+
 // ============== MAIN APP ==============
 
 function App() {
@@ -1447,6 +1485,7 @@ function App() {
               }} />
             )
           } />
+          <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
       </BrowserRouter>
     </div>
