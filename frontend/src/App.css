@@ -1,9 +1,9 @@
 /* ============== VARIABLES ============== */
 :root {
-  /* New ScanSavvy Branding */
-  --primary: #2FBFA5;           /* Teal/Green accent */
-  --primary-dark: #25A08A;      /* Darker teal */
-  --primary-light: #E5F7F4;     /* Light teal background */
+  /* ScanSavvy Branding - Navy Only */
+  --primary: #1F2A44;           /* Navy blue (main accent) */
+  --primary-dark: #161D30;      /* Darker navy */
+  --primary-light: #E8EAF0;     /* Light navy background */
   --secondary: #1F2A44;         /* Deep navy */
   --secondary-light: #2E3B5A;   /* Lighter navy */
   --text-dark: #1F2A44;         /* Navy for text */
