@@ -385,10 +385,18 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   margin: 0 auto;
 }
 .partner-logo {
-  opacity: 0.85;
-  transition: opacity 0.2s;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.partner-logo:hover { opacity: 1; }
+.partner-logo:hover { 
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.partner-name {
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
 .brand-svg { height: 24px; width: auto; }
 .partners-count {
   margin-top: 20px;
