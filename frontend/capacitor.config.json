@@ -1,0 +1,8 @@
+{
+  "appId": "com.scansavvy.app",
+  "appName": "ScanSavvy",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  }
+}
