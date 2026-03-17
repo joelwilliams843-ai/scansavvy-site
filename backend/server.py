@@ -580,7 +580,7 @@ async def view_bundle_page(bundle_id: str):
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{ 
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                background: linear-gradient(135deg, #2DB89A 0%, #249980 100%);
+                background: linear-gradient(135deg, #2FBFA5 0%, #25A08A 100%);
                 min-height: 100vh;
                 padding: 20px;
             }}
@@ -597,10 +597,10 @@ async def view_bundle_page(bundle_id: str):
             .logo {{
                 font-size: 28px;
                 font-weight: 700;
-                color: #1C2B3A;
+                color: #1F2A44;
                 margin-bottom: 8px;
             }}
-            .logo span {{ color: #2DB89A; }}
+            .logo span {{ color: #2FBFA5; }}
             .user-name {{
                 color: #666;
                 font-size: 14px;
@@ -612,7 +612,7 @@ async def view_bundle_page(bundle_id: str):
             .week-label {{
                 font-size: 18px;
                 font-weight: 600;
-                color: #1C2B3A;
+                color: #1F2A44;
                 margin-bottom: 4px;
             }}
             .valid-until {{
@@ -634,7 +634,7 @@ async def view_bundle_page(bundle_id: str):
             .stat-value {{
                 font-size: 24px;
                 font-weight: 700;
-                color: #2DB89A;
+                color: #2FBFA5;
             }}
             .stat-label {{
                 font-size: 12px;
@@ -649,7 +649,7 @@ async def view_bundle_page(bundle_id: str):
             .coupons-title {{
                 font-size: 16px;
                 font-weight: 600;
-                color: #1C2B3A;
+                color: #1F2A44;
                 margin-bottom: 16px;
                 padding: 0 8px;
             }}
@@ -658,7 +658,7 @@ async def view_bundle_page(bundle_id: str):
                 border-radius: 12px;
                 padding: 16px;
                 margin-bottom: 12px;
-                border-left: 4px solid #2DB89A;
+                border-left: 4px solid #2FBFA5;
             }}
             .coupon:last-child {{ margin-bottom: 0; }}
             .coupon-header {{
@@ -669,12 +669,12 @@ async def view_bundle_page(bundle_id: str):
             }}
             .store-name {{
                 font-size: 12px;
-                color: #2DB89A;
+                color: #2FBFA5;
                 font-weight: 600;
                 text-transform: uppercase;
             }}
             .savings {{
-                background: #2DB89A;
+                background: #2FBFA5;
                 color: white;
                 padding: 4px 10px;
                 border-radius: 20px;
@@ -684,7 +684,7 @@ async def view_bundle_page(bundle_id: str):
             .coupon-title {{
                 font-size: 16px;
                 font-weight: 600;
-                color: #1C2B3A;
+                color: #1F2A44;
                 margin-bottom: 4px;
             }}
             .coupon-desc {{
