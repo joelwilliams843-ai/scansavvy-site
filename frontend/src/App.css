@@ -1,13 +1,14 @@
 /* ============== VARIABLES ============== */
 :root {
-  --primary: #2DB89A;
-  --primary-dark: #249980;
-  --primary-light: #E8F7F4;
-  --secondary: #1C2B3A;
-  --secondary-light: #2A3F54;
-  --text-dark: #1C2B3A;
-  --text-medium: #4A5B6A;
-  --text-light: #7A8A9A;
+  /* New ScanSavvy Branding */
+  --primary: #2FBFA5;           /* Teal/Green accent */
+  --primary-dark: #25A08A;      /* Darker teal */
+  --primary-light: #E5F7F4;     /* Light teal background */
+  --secondary: #1F2A44;         /* Deep navy */
+  --secondary-light: #2E3B5A;   /* Lighter navy */
+  --text-dark: #1F2A44;         /* Navy for text */
+  --text-medium: #4A5568;       /* Medium gray */
+  --text-light: #718096;        /* Light gray */
   --white: #FFFFFF;
   --off-white: #F7F9FB;
   --gray-50: #F9FAFB;
