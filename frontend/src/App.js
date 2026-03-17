@@ -1545,28 +1545,231 @@ const PrivacyPage = () => {
   );
 };
 
+// ============== QUICK BUNDLE PAGE (ZERO FRICTION) ==============
+// Works without login - stores selection in local storage
+
+const QuickBundlePage = () => {
+  const [selectedStores, setSelectedStores] = useState(() => 
+    loadFromLocalStorage(STORAGE_KEYS.SELECTED_STORES, ['walmart', 'target'])
+  );
+  const [bundle, setBundle] = useState(null);
+  const [showStoreSelector, setShowStoreSelector] = useState(false);
+  const [showCoupons, setShowCoupons] = useState(true);
+  
+  const availableStores = [
+    { id: 'walmart', name: 'Walmart', color: '#0071DC' },
+    { id: 'target', name: 'Target', color: '#CC0000' },
+    { id: 'kroger', name: 'Kroger', color: '#0C3E80' },
+    { id: 'cvs', name: 'CVS', color: '#CC0000' },
+    { id: 'walgreens', name: 'Walgreens', color: '#E31837' },
+    { id: 'costco', name: 'Costco', color: '#E31837' },
+    { id: 'publix', name: 'Publix', color: '#3B8C3B' },
+    { id: 'aldi', name: 'ALDI', color: '#00529B' },
+  ];
+  
+  // Generate bundle when stores change
+  useEffect(() => {
+    if (selectedStores.length > 0) {
+      const newBundle = generateLocalBundle(selectedStores);
+      setBundle(newBundle);
+      saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+    } else {
+      setBundle(null);
+    }
+  }, [selectedStores]);
+  
+  const toggleStore = (storeId) => {
+    setSelectedStores(prev => 
+      prev.includes(storeId)
+        ? prev.filter(id => id !== storeId)
+        : [...prev, storeId]
+    );
+  };
+  
+  const handleRefreshBundle = () => {
+    if (selectedStores.length > 0) {
+      const newBundle = generateLocalBundle(selectedStores);
+      setBundle(newBundle);
+      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+    }
+  };
+  
+  const getStoreName = (storeId) => {
+    const store = availableStores.find(s => s.id === storeId);
+    return store ? store.name : storeId;
+  };
+  
+  return (
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        {/* Header */}
+        <div className="dashboard-header">
+          <div className="welcome-section">
+            <h1 data-testid="dashboard-title">This Week's Savings</h1>
+            <p className="tier-badge">Ready for checkout</p>
+          </div>
+        </div>
+        
+        {/* Store Selection Bar */}
+        <div className="store-selection-bar">
+          <div className="selected-stores-display">
+            {selectedStores.map(storeId => (
+              <span key={storeId} className="store-chip-small">
+                {getStoreName(storeId)}
+              </span>
+            ))}
+            <button 
+              className="btn-text-small" 
+              onClick={() => setShowStoreSelector(!showStoreSelector)}
+            >
+              {showStoreSelector ? 'Done' : 'Change Stores'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Store Selector (collapsible) */}
+        {showStoreSelector && (
+          <div className="store-selector-inline">
+            {availableStores.map(store => (
+              <button
+                key={store.id}
+                className={`store-btn ${selectedStores.includes(store.id) ? 'selected' : ''}`}
+                onClick={() => toggleStore(store.id)}
+                style={{ borderColor: selectedStores.includes(store.id) ? store.color : undefined }}
+              >
+                {store.name}
+                {selectedStores.includes(store.id) && <span className="check-mark">✓</span>}
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {/* Bundle Display */}
+        {bundle && (
+          <div className="master-bundle-card" data-testid="master-bundle">
+            {/* Bundle Header */}
+            <div className="bundle-header">
+              <div className="bundle-week">
+                <span className="week-label">{bundle.weekLabel}</span>
+                <span className="bundle-type-badge">
+                  {bundle.couponCount} coupons from {bundle.stores.length} store{bundle.stores.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="bundle-expiry">
+                Valid until {bundle.validUntil}
+              </div>
+            </div>
+            
+            {/* Stats */}
+            <div className="bundle-stats">
+              <div className="stat-item">
+                <span className="stat-number">{bundle.couponCount}</span>
+                <span className="stat-text">Coupons</span>
+              </div>
+              <div className="stat-divider"></div>
+              <div className="stat-item">
+                <span className="stat-number">${bundle.totalSavings}</span>
+                <span className="stat-text">Est. Savings</span>
+              </div>
+            </div>
+            
+            {/* Coupon List - Always visible, clean and simple */}
+            <div className="coupon-list-section" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0, color: '#1F2A44' }}>Your Coupons</h4>
+                <button className="btn-text-small" onClick={() => setShowCoupons(!showCoupons)}>
+                  {showCoupons ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              
+              {showCoupons && (
+                <div className="coupon-list">
+                  {bundle.coupons.map(coupon => (
+                    <div key={coupon.id} className="coupon-item">
+                      <div className="coupon-info">
+                        <span className="coupon-store">{getStoreName(coupon.storeId)}</span>
+                        <span className="coupon-title">{coupon.title}</span>
+                        <span className="coupon-desc">{coupon.description}</span>
+                      </div>
+                      <div className="coupon-savings">{coupon.discount}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* QR Code Section */}
+            <div className="qr-section" style={{ marginTop: '24px' }}>
+              <div className="qr-wrapper">
+                <QRCodeDisplay bundleId={bundle.id} size={200} />
+              </div>
+              <p className="qr-instruction">Scan for quick access</p>
+              <p style={{ fontSize: '0.8rem', color: '#718096', marginTop: '8px' }}>
+                (Backup method - show coupons above at checkout)
+              </p>
+            </div>
+            
+            {/* Refresh Button */}
+            <button 
+              className="btn-secondary" 
+              onClick={handleRefreshBundle}
+              style={{ width: '100%', marginTop: '16px' }}
+            >
+              ↻ Refresh Bundle
+            </button>
+          </div>
+        )}
+        
+        {!bundle && (
+          <div className="empty-state">
+            <div className="empty-icon">🛒</div>
+            <h3>Select Your Stores</h3>
+            <p>Choose at least one store to see your savings bundle.</p>
+            <button className="btn-primary" onClick={() => setShowStoreSelector(true)}>
+              Select Stores
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ============== MAIN APP ==============
 
 function App() {
   const [user, setUser] = useState(null);
+  const [useQuickMode, setUseQuickMode] = useState(true); // Default to quick mode for zero friction
   
   useEffect(() => {
-    const savedUserId = localStorage.getItem('scansavvy_user_id');
-    if (savedUserId) {
-      axios.get(`${API}/users/${savedUserId}`)
-        .then(res => setUser(res.data))
-        .catch(() => localStorage.removeItem('scansavvy_user_id'));
+    // Check if user prefers quick mode (no login)
+    const quickMode = loadFromLocalStorage('scansavvy_quick_mode', true);
+    setUseQuickMode(quickMode);
+    
+    // Only try to load user if not in quick mode
+    if (!quickMode) {
+      const savedUserId = localStorage.getItem('scansavvy_user_id');
+      if (savedUserId) {
+        axios.get(`${API}/users/${savedUserId}`)
+          .then(res => setUser(res.data))
+          .catch(() => localStorage.removeItem('scansavvy_user_id'));
+      }
     }
   }, []);
   
   const handleLogin = (userData) => {
     setUser(userData);
+    setUseQuickMode(false);
     localStorage.setItem('scansavvy_user_id', userData.id);
+    saveToLocalStorage('scansavvy_quick_mode', false);
   };
   
   const handleLogout = () => {
     setUser(null);
+    setUseQuickMode(true);
     localStorage.removeItem('scansavvy_user_id');
+    saveToLocalStorage('scansavvy_quick_mode', true);
     window.location.href = '/';
   };
   
@@ -1580,12 +1783,9 @@ function App() {
         <Header user={user} onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={
-            user ? (
-              <DashboardPage user={user} onUpdateUser={handleUpdateUser} />
-            ) : (
-              <HomePage onGetStarted={() => window.location.href = '/onboarding'} />
-            )
+            <HomePage onGetStarted={() => window.location.href = '/bundle'} />
           } />
+          <Route path="/bundle" element={<QuickBundlePage />} />
           <Route path="/onboarding" element={
             <OnboardingPage onComplete={(userData) => {
               handleLogin(userData);
@@ -1596,10 +1796,7 @@ function App() {
             user ? (
               <DashboardPage user={user} onUpdateUser={handleUpdateUser} />
             ) : (
-              <OnboardingPage onComplete={(userData) => {
-                handleLogin(userData);
-                window.location.href = '/dashboard';
-              }} />
+              <QuickBundlePage />
             )
           } />
           <Route path="/privacy" element={<PrivacyPage />} />
