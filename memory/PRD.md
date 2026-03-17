@@ -12,8 +12,38 @@ ScanSavvy is a smart savings assistant that automatically delivers weekly coupon
 ## Architecture
 - **Frontend**: React SPA with React Router
 - **Backend**: FastAPI with MongoDB + APScheduler for weekly automation
-- **Deployment**: Netlify (via GitHub main branch auto-deploy)
+- **QR Library**: qrcode.react (real, scannable QR codes)
 - **QR System**: One master QR per user → links to mobile-friendly HTML page
+
+---
+
+## QR CODE SYSTEM (FIXED - March 17, 2025)
+
+### QR Code Implementation
+- **Library**: `qrcode.react` (QRCodeSVG component)
+- **Size**: 256x256 pixels minimum
+- **Colors**: Pure black (#000000) on white (#FFFFFF) - high contrast
+- **Error Correction**: Level M
+
+### URL Structure
+```
+https://weekly-savings-1.preview.emergentagent.com/api/bundle/{bundle_id}/view
+```
+
+### QR Scan Behavior
+1. User scans QR with iPhone/Android camera
+2. Opens mobile-optimized HTML page
+3. Shows user name, week label, expiry date
+4. Lists all coupons with store, title, savings
+
+### Dashboard Features
+- Real scannable QR code (256x256)
+- Fallback URL displayed below QR (clickable)
+- "🔗 Test QR Code Link" button
+- Week label, expiration, coupon count, total savings
+- "View Included Coupons" expandable list
+- "Save QR to Phone" button
+- "Refresh QR Code" button
 
 ---
 
