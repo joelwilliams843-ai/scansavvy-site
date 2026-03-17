@@ -318,6 +318,110 @@ const HomePage = ({ onGetStarted }) => {
         <p className="partners-count">+ 12 more retailers</p>
       </section>
 
+      {/* Popular in Your Area Section */}
+      <section className="popular-section" data-testid="popular-section">
+        <div className="section-intro">
+          <h2 className="section-title">Popular in Your Area</h2>
+          <p className="section-desc">See what shoppers near you are saving on this week</p>
+        </div>
+        
+        <div className="popular-grid">
+          <div className="trending-deals">
+            <h3 className="popular-heading">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+              Trending Deals
+            </h3>
+            <div className="deal-cards">
+              <div className="deal-card">
+                <div className="deal-badge hot">HOT</div>
+                <div className="deal-store-name" style={{color: '#CC0000'}}>Target</div>
+                <div className="deal-offer">25% OFF</div>
+                <div className="deal-desc">All household essentials</div>
+                <div className="deal-claimed">2,340 claimed today</div>
+              </div>
+              <div className="deal-card">
+                <div className="deal-badge new">NEW</div>
+                <div className="deal-store-name" style={{color: '#0071DC'}}>Walmart</div>
+                <div className="deal-offer">$10 OFF $50</div>
+                <div className="deal-desc">Grocery purchases</div>
+                <div className="deal-claimed">1,892 claimed today</div>
+              </div>
+              <div className="deal-card">
+                <div className="deal-store-name" style={{color: '#0C3E80'}}>Kroger</div>
+                <div className="deal-offer">BOGO Free</div>
+                <div className="deal-desc">Select snacks & beverages</div>
+                <div className="deal-claimed">1,567 claimed today</div>
+              </div>
+              <div className="deal-card">
+                <div className="deal-store-name" style={{color: '#CC0000'}}>CVS</div>
+                <div className="deal-offer">40% OFF</div>
+                <div className="deal-desc">Health & wellness items</div>
+                <div className="deal-claimed">987 claimed today</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="local-stats">
+            <h3 className="popular-heading">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              Your Area This Week
+            </h3>
+            <div className="stats-cards">
+              <div className="stat-card">
+                <div className="stat-value">$47,230</div>
+                <div className="stat-label">Saved by local shoppers</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">12,450</div>
+                <div className="stat-label">Coupons redeemed</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">$18.92</div>
+                <div className="stat-label">Avg savings per trip</div>
+              </div>
+            </div>
+            
+            <div className="top-savers">
+              <h4>Top Savers Near You</h4>
+              <div className="saver-list">
+                <div className="saver-item">
+                  <div className="saver-avatar">S</div>
+                  <div className="saver-info">
+                    <span className="saver-name">Sarah M.</span>
+                    <span className="saver-amount">Saved $156 this month</span>
+                  </div>
+                </div>
+                <div className="saver-item">
+                  <div className="saver-avatar">J</div>
+                  <div className="saver-info">
+                    <span className="saver-name">James T.</span>
+                    <span className="saver-amount">Saved $142 this month</span>
+                  </div>
+                </div>
+                <div className="saver-item">
+                  <div className="saver-avatar">M</div>
+                  <div className="saver-info">
+                    <span className="saver-name">Maria L.</span>
+                    <span className="saver-amount">Saved $128 this month</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="popular-cta">
+          <button className="btn-primary btn-xl" onClick={() => setShowLocationModal(true)}>
+            See Deals in My Area
+          </button>
+        </div>
+      </section>
+
       {/* How It Works - Updated 4 Steps */}
       <section className="how-it-works" id="how-it-works">
         <div className="section-intro">
