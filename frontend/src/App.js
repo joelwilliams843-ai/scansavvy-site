@@ -1034,6 +1034,7 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('scansavvy_user_id');
+    window.location.href = '/';
   };
   
   const handleUpdateUser = (userData) => {
