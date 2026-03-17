@@ -811,7 +811,7 @@ const OnboardingPage = ({ onComplete }) => {
     const fetchStores = async () => {
       try {
         const response = await axios.get(`${API}/stores`);
-        setStores(response.data.stores);
+        setStores(response.data.stores || []);
       } catch (e) {
         console.error("Failed to fetch stores", e);
       }
@@ -819,16 +819,17 @@ const OnboardingPage = ({ onComplete }) => {
     fetchStores();
   }, []);
   
-  const filteredStores = stores.filter(store => 
+  const filteredStores = (stores || []).filter(store => 
     store.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const toggleStore = (storeId) => {
-    setSelectedStores(prev => 
-      prev.includes(storeId) 
-        ? prev.filter(id => id !== storeId)
-        : [...prev, storeId]
-    );
+    setSelectedStores(prev => {
+      const current = prev || [];
+      return current.includes(storeId) 
+        ? current.filter(id => id !== storeId)
+        : [...current, storeId];
+    });
   };
   
   const handleSubmit = async () => {
@@ -1153,14 +1154,15 @@ const DashboardPage = ({ user, onUpdateUser }) => {
   };
   
   const toggleTempStore = (storeId) => {
-    setTempSelectedStores(prev => 
-      prev.includes(storeId) 
-        ? prev.filter(id => id !== storeId)
-        : [...prev, storeId]
-    );
+    setTempSelectedStores(prev => {
+      const current = prev || [];
+      return current.includes(storeId) 
+        ? current.filter(id => id !== storeId)
+        : [...current, storeId];
+    });
   };
   
-  const filteredStores = stores.filter(store => 
+  const filteredStores = (stores || []).filter(store => 
     store.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
@@ -1580,11 +1582,12 @@ const QuickBundlePage = () => {
   }, [selectedStores]);
   
   const toggleStore = (storeId) => {
-    setSelectedStores(prev => 
-      prev.includes(storeId)
-        ? prev.filter(id => id !== storeId)
-        : [...prev, storeId]
-    );
+    setSelectedStores(prev => {
+      const current = prev || [];
+      return current.includes(storeId)
+        ? current.filter(id => id !== storeId)
+        : [...current, storeId];
+    });
   };
   
   const handleRefreshBundle = () => {
