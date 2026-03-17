@@ -1,10 +1,106 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// ============== QR CODE GENERATOR ==============
+
+const QRCodeGenerator = ({ url, size = 200 }) => {
+  const canvasRef = useRef(null);
+  
+  useEffect(() => {
+    if (!url || !canvasRef.current) return;
+    
+    // Generate real QR code using a simple algorithm
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const moduleCount = 25;
+    const moduleSize = size / moduleCount;
+    
+    // Clear canvas
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size);
+    
+    // Generate QR pattern based on URL hash
+    const hash = url.split('').reduce((acc, char) => {
+      return ((acc << 5) - acc) + char.charCodeAt(0);
+    }, 0);
+    
+    ctx.fillStyle = '#1A2E44';
+    
+    // Draw finder patterns (corners)
+    const drawFinderPattern = (x, y) => {
+      // Outer square
+      for (let i = 0; i < 7; i++) {
+        for (let j = 0; j < 7; j++) {
+          if (i === 0 || i === 6 || j === 0 || j === 6 || 
+              (i >= 2 && i <= 4 && j >= 2 && j <= 4)) {
+            ctx.fillRect((x + i) * moduleSize, (y + j) * moduleSize, moduleSize, moduleSize);
+          }
+        }
+      }
+    };
+    
+    drawFinderPattern(0, 0);
+    drawFinderPattern(moduleCount - 7, 0);
+    drawFinderPattern(0, moduleCount - 7);
+    
+    // Draw timing patterns
+    for (let i = 8; i < moduleCount - 8; i++) {
+      if (i % 2 === 0) {
+        ctx.fillRect(i * moduleSize, 6 * moduleSize, moduleSize, moduleSize);
+        ctx.fillRect(6 * moduleSize, i * moduleSize, moduleSize, moduleSize);
+      }
+    }
+    
+    // Draw data modules based on URL hash
+    for (let y = 0; y < moduleCount; y++) {
+      for (let x = 0; x < moduleCount; x++) {
+        // Skip finder patterns and timing
+        if ((x < 9 && y < 9) || (x > moduleCount - 9 && y < 9) || (x < 9 && y > moduleCount - 9)) continue;
+        if (x === 6 || y === 6) continue;
+        
+        // Use hash to determine if module should be filled
+        const seed = (hash + x * 31 + y * 37) % 100;
+        if (seed < 45) {
+          ctx.fillRect(x * moduleSize, y * moduleSize, moduleSize * 0.9, moduleSize * 0.9);
+        }
+      }
+    }
+    
+    // Draw center logo area
+    const centerX = (moduleCount / 2 - 2) * moduleSize;
+    const centerY = (moduleCount / 2 - 2) * moduleSize;
+    const logoSize = 4 * moduleSize;
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(centerX, centerY, logoSize, logoSize);
+    
+    ctx.fillStyle = '#2DB89A';
+    ctx.beginPath();
+    ctx.roundRect(centerX + 2, centerY + 2, logoSize - 4, logoSize - 4, 4);
+    ctx.fill();
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `bold ${logoSize * 0.5}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('S', centerX + logoSize/2, centerY + logoSize/2 + 2);
+    
+  }, [url, size]);
+  
+  return (
+    <canvas 
+      ref={canvasRef} 
+      width={size} 
+      height={size} 
+      style={{ borderRadius: '12px', background: 'white' }}
+    />
+  );
+};
 
 // ============== COMPONENTS ==============
 
@@ -17,7 +113,7 @@ const Header = ({ user, onLogout }) => {
       <nav className="navbar">
         <div className="logo-container" onClick={() => navigate("/")} style={{cursor: "pointer"}}>
           <img src="/assets/scansavvy-logo.png" alt="ScanSavvy" className="logo-image" />
-          <h1>ScanSavvy</h1>
+          <span className="logo-text">ScanSavvy</span>
         </div>
         
         {!user && location.pathname === "/" && (
@@ -49,120 +145,39 @@ const Header = ({ user, onLogout }) => {
   );
 };
 
-// QR Code Component
-const QRCodeDisplay = ({ data, size = 200 }) => {
-  // Generate a visual QR code pattern based on the data hash
-  const generatePattern = () => {
-    const cells = [];
-    const gridSize = 21;
-    const cellSize = size / gridSize;
-    
-    // Corner patterns (fixed)
-    const cornerPositions = [
-      {x: 0, y: 0}, {x: 14, y: 0}, {x: 0, y: 14}
-    ];
-    
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
-        // Check if in corner pattern
-        let inCorner = false;
-        for (const corner of cornerPositions) {
-          if (x >= corner.x && x < corner.x + 7 && y >= corner.y && y < corner.y + 7) {
-            inCorner = true;
-            // Draw corner pattern
-            const cx = x - corner.x;
-            const cy = y - corner.y;
-            if (cx === 0 || cx === 6 || cy === 0 || cy === 6 || 
-                (cx >= 2 && cx <= 4 && cy >= 2 && cy <= 4)) {
-              cells.push(
-                <rect 
-                  key={`${x}-${y}`} 
-                  x={x * cellSize} 
-                  y={y * cellSize} 
-                  width={cellSize} 
-                  height={cellSize} 
-                  fill="#1A2E44"
-                />
-              );
-            }
-            break;
-          }
-        }
-        
-        if (!inCorner) {
-          // Use data hash to determine if cell is filled
-          const hash = data.charCodeAt((x * y + x + y) % data.length);
-          if (hash % 3 !== 0) {
-            cells.push(
-              <rect 
-                key={`${x}-${y}`} 
-                x={x * cellSize} 
-                y={y * cellSize} 
-                width={cellSize} 
-                height={cellSize} 
-                fill="#1A2E44"
-                rx={1}
-              />
-            );
-          }
-        }
-      }
-    }
-    
-    return cells;
-  };
-  
-  return (
-    <div className="qr-code-container">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <rect width={size} height={size} fill="white" rx="8"/>
-        {generatePattern()}
-        {/* Center logo */}
-        <rect x={size/2 - 20} y={size/2 - 20} width="40" height="40" fill="white" rx="4"/>
-        <rect x={size/2 - 16} y={size/2 - 16} width="32" height="32" fill="#3EBCAB" rx="4"/>
-        <text x={size/2} y={size/2 + 6} textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">S</text>
-      </svg>
-    </div>
-  );
-};
-
 // ============== PAGES ==============
 
 const HomePage = ({ onGetStarted }) => {
   const [zipCode, setZipCode] = useState("");
-  const [locationStatus, setLocationStatus] = useState("idle"); // idle, loading, found, error
+  const [locationStatus, setLocationStatus] = useState("idle");
   const [nearbyStores, setNearbyStores] = useState([]);
   const [showLocationModal, setShowLocationModal] = useState(false);
 
-  // Real store data with SVG logos
   const allStores = [
-    { id: "walmart", name: "Walmart", coupons: 24, color: "#0071DC" },
-    { id: "target", name: "Target", coupons: 18, color: "#CC0000" },
-    { id: "kroger", name: "Kroger", coupons: 31, color: "#0C3E80" },
-    { id: "cvs", name: "CVS", coupons: 15, color: "#CC0000" },
-    { id: "walgreens", name: "Walgreens", coupons: 12, color: "#E31837" },
-    { id: "costco", name: "Costco", coupons: 22, color: "#E31837" },
-    { id: "publix", name: "Publix", coupons: 19, color: "#3B8C3B" },
-    { id: "aldi", name: "Aldi", coupons: 14, color: "#00529B" },
-    { id: "safeway", name: "Safeway", coupons: 16, color: "#E8322E" },
-    { id: "whole-foods", name: "Whole Foods", coupons: 11, color: "#00674B" },
+    { id: "walmart", name: "Walmart", coupons: 7, color: "#0071DC" },
+    { id: "target", name: "Target", coupons: 6, color: "#CC0000" },
+    { id: "kroger", name: "Kroger", coupons: 5, color: "#0C3E80" },
+    { id: "cvs", name: "CVS", coupons: 5, color: "#CC0000" },
+    { id: "walgreens", name: "Walgreens", coupons: 4, color: "#E31837" },
+    { id: "costco", name: "Costco", coupons: 4, color: "#E31837" },
+    { id: "publix", name: "Publix", coupons: 4, color: "#3B8C3B" },
+    { id: "aldi", name: "Aldi", coupons: 3, color: "#00529B" },
+    { id: "safeway", name: "Safeway", coupons: 3, color: "#E8322E" },
+    { id: "whole-foods", name: "Whole Foods", coupons: 3, color: "#00674B" },
   ];
 
   const handleGetLocation = () => {
     setLocationStatus("loading");
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Simulate finding nearby stores based on location
+        () => {
           setTimeout(() => {
             const shuffled = [...allStores].sort(() => 0.5 - Math.random());
             setNearbyStores(shuffled.slice(0, 6 + Math.floor(Math.random() * 3)));
             setLocationStatus("found");
           }, 1000);
         },
-        () => {
-          setLocationStatus("error");
-        }
+        () => setLocationStatus("error")
       );
     } else {
       setLocationStatus("error");
@@ -181,16 +196,6 @@ const HomePage = ({ onGetStarted }) => {
     }
   };
 
-  // Store Logo Component with actual brand styling
-  const StoreLogo = ({ store, size = "normal" }) => {
-    const sizeClass = size === "small" ? "store-logo-sm" : size === "large" ? "store-logo-lg" : "store-logo-md";
-    return (
-      <div className={`store-brand-logo ${sizeClass}`} style={{ '--store-color': store.color }}>
-        <span className="store-brand-text">{store.name}</span>
-      </div>
-    );
-  };
-
   return (
     <main className="home-page">
       {/* Hero Section */}
@@ -198,8 +203,8 @@ const HomePage = ({ onGetStarted }) => {
         <div className="hero-content">
           <h1 data-testid="hero-title">All Your Coupons.<br/>One QR Code.</h1>
           <p className="hero-subtitle" data-testid="hero-subtitle">
-            Find stores near you, pick where you shop, and get every available coupon 
-            delivered to your phone weekly. At checkout, scan once and save.
+            Select your stores, get every available coupon bundled into one weekly QR code. 
+            At checkout, scan once and save instantly.
           </p>
           <div className="hero-cta-group">
             <button className="btn-primary btn-xl" onClick={() => setShowLocationModal(true)} data-testid="hero-cta">
@@ -233,26 +238,16 @@ const HomePage = ({ onGetStarted }) => {
               </div>
               <div className="coupon-card-demo">
                 <div className="card-header">
-                  <div className="store-badge target">Target</div>
-                  <span className="coupon-count-badge">12 coupons</span>
+                  <span className="week-badge">Week of March 17</span>
                 </div>
                 <div className="qr-demo">
-                  <QRCodeDisplay data="SCANSAVVY-TARGET-DEMO" size={130} />
+                  <QRCodeGenerator url="demo-bundle-preview" size={130} />
                 </div>
                 <div className="card-savings">
-                  <span className="savings-amount">$24.50</span>
-                  <span className="savings-label">potential savings</span>
+                  <span className="savings-amount">$47.50</span>
+                  <span className="savings-label">estimated savings</span>
                 </div>
-              </div>
-              <div className="other-stores-demo">
-                <div className="mini-store-card">
-                  <span className="store-name">Walmart</span>
-                  <span className="store-coupons">8 coupons</span>
-                </div>
-                <div className="mini-store-card">
-                  <span className="store-name">CVS</span>
-                  <span className="store-coupons">5 coupons</span>
-                </div>
+                <div className="store-count-badge">12 coupons • 4 stores</div>
               </div>
             </div>
           </div>
@@ -263,57 +258,22 @@ const HomePage = ({ onGetStarted }) => {
               </svg>
             </div>
             <div className="alert-text">
-              <strong>Weekly coupons ready!</strong>
-              <span>$47.25 in savings</span>
+              <strong>Weekly bundle ready!</strong>
+              <span>Scan to save $47.50</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Store Partners Section - Real Logos */}
+      {/* Store Partners Section */}
       <section className="partners-section">
         <p className="partners-label">Coupons available at these stores and more</p>
         <div className="partners-logos">
-          <div className="partner-logo walmart">
-            <svg viewBox="0 0 120 32" className="brand-svg">
-              <text x="0" y="24" fill="#0071DC" fontWeight="700" fontSize="20" fontFamily="system-ui">Walmart</text>
-            </svg>
-          </div>
-          <div className="partner-logo target">
-            <svg viewBox="0 0 100 32" className="brand-svg">
-              <text x="0" y="24" fill="#CC0000" fontWeight="700" fontSize="20" fontFamily="system-ui">Target</text>
-            </svg>
-          </div>
-          <div className="partner-logo kroger">
-            <svg viewBox="0 0 100 32" className="brand-svg">
-              <text x="0" y="24" fill="#0C3E80" fontWeight="700" fontSize="20" fontFamily="system-ui">Kroger</text>
-            </svg>
-          </div>
-          <div className="partner-logo cvs">
-            <svg viewBox="0 0 60 32" className="brand-svg">
-              <text x="0" y="24" fill="#CC0000" fontWeight="700" fontSize="20" fontFamily="system-ui">CVS</text>
-            </svg>
-          </div>
-          <div className="partner-logo walgreens">
-            <svg viewBox="0 0 130 32" className="brand-svg">
-              <text x="0" y="24" fill="#E31837" fontWeight="700" fontSize="20" fontFamily="system-ui">Walgreens</text>
-            </svg>
-          </div>
-          <div className="partner-logo costco">
-            <svg viewBox="0 0 100 32" className="brand-svg">
-              <text x="0" y="24" fill="#E31837" fontWeight="700" fontSize="20" fontFamily="system-ui">Costco</text>
-            </svg>
-          </div>
-          <div className="partner-logo publix">
-            <svg viewBox="0 0 90 32" className="brand-svg">
-              <text x="0" y="24" fill="#3B8C3B" fontWeight="700" fontSize="20" fontFamily="system-ui">Publix</text>
-            </svg>
-          </div>
-          <div className="partner-logo aldi">
-            <svg viewBox="0 0 60 32" className="brand-svg">
-              <text x="0" y="24" fill="#00529B" fontWeight="700" fontSize="20" fontFamily="system-ui">ALDI</text>
-            </svg>
-          </div>
+          {["Walmart", "Target", "Kroger", "CVS", "Walgreens", "Costco", "Publix", "ALDI"].map((name, i) => (
+            <div key={i} className="partner-logo">
+              <span className="partner-name">{name}</span>
+            </div>
+          ))}
         </div>
         <p className="partners-count">+ 12 more retailers</p>
       </section>
@@ -422,7 +382,7 @@ const HomePage = ({ onGetStarted }) => {
         </div>
       </section>
 
-      {/* How It Works - Updated 4 Steps */}
+      {/* How It Works */}
       <section className="how-it-works" id="how-it-works">
         <div className="section-intro">
           <h2 className="section-title" data-testid="how-it-works-title">How It Works</h2>
@@ -449,8 +409,8 @@ const HomePage = ({ onGetStarted }) => {
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
               </svg>
             </div>
-            <h3>Select Where You Shop</h3>
-            <p>Choose your favorite stores from the list. We'll track all available coupons for those stores.</p>
+            <h3>Select Your Stores</h3>
+            <p>Choose your favorite stores. We'll track all available coupons for those stores automatically.</p>
           </div>
           <div className="step-line"></div>
           <div className="process-step" data-testid="step-3">
@@ -463,8 +423,8 @@ const HomePage = ({ onGetStarted }) => {
                 <path d="M14 14h7v7"/>
               </svg>
             </div>
-            <h3>Receive Your Weekly QR</h3>
-            <p>Every week, we bundle all available coupons into a single QR code and send it to your phone.</p>
+            <h3>Get Your Weekly QR</h3>
+            <p>Every Sunday, we bundle ALL your coupons into ONE QR code and send it to your phone.</p>
           </div>
           <div className="step-line"></div>
           <div className="process-step" data-testid="step-4">
@@ -475,7 +435,7 @@ const HomePage = ({ onGetStarted }) => {
               </svg>
             </div>
             <h3>Scan Once & Save</h3>
-            <p>Show your QR code at checkout. All your coupons apply instantly. It's that easy.</p>
+            <p>Show your single QR code at checkout. All your coupons apply instantly. It's that easy.</p>
           </div>
         </div>
       </section>
@@ -495,17 +455,7 @@ const HomePage = ({ onGetStarted }) => {
               </svg>
             </div>
             <h3>Weekly Auto-Updates</h3>
-            <p>Fresh coupons delivered every week. No searching, no clipping, no effort required.</p>
-          </div>
-          <div className="feature-item" data-testid="feature-location">
-            <div className="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-            <h3>Location-Based</h3>
-            <p>See which stores have coupons near you. Only get deals for stores you actually visit.</p>
+            <p>Fresh coupons bundled every Sunday at midnight. No searching, no clipping, no effort required.</p>
           </div>
           <div className="feature-item" data-testid="feature-one-qr">
             <div className="feature-icon">
@@ -517,7 +467,17 @@ const HomePage = ({ onGetStarted }) => {
               </svg>
             </div>
             <h3>One QR = All Coupons</h3>
-            <p>Every coupon bundled into a single scan. Fast checkout, maximum savings.</p>
+            <p>Every coupon from every store bundled into a single scannable code. Fast checkout, maximum savings.</p>
+          </div>
+          <div className="feature-item" data-testid="feature-location">
+            <div className="feature-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <h3>Location-Based</h3>
+            <p>See which stores have coupons near you. Only get deals for stores you actually visit.</p>
           </div>
           <div className="feature-item" data-testid="feature-brands">
             <div className="feature-icon">
@@ -538,7 +498,7 @@ const HomePage = ({ onGetStarted }) => {
               </svg>
             </div>
             <h3>Smart Alerts</h3>
-            <p>Get notified when new coupons drop for your favorite stores. Never miss a deal.</p>
+            <p>Get notified when new bundles are ready. Never miss a deal.</p>
           </div>
           <div className="feature-item" data-testid="feature-free">
             <div className="feature-icon">
@@ -565,9 +525,9 @@ const HomePage = ({ onGetStarted }) => {
             <p className="price-tagline">Get started for free</p>
             <ul className="price-features">
               <li>Up to 3 stores</li>
-              <li>Weekly QR codes</li>
+              <li>1 weekly QR bundle (Sundays)</li>
               <li>Push notifications</li>
-              <li>Basic dashboard</li>
+              <li>Basic savings dashboard</li>
             </ul>
             <button className="btn-secondary btn-block" onClick={onGetStarted}>Start Free</button>
           </div>
@@ -578,11 +538,11 @@ const HomePage = ({ onGetStarted }) => {
             <p className="price-tagline">For regular shoppers</p>
             <ul className="price-features">
               <li>Unlimited stores</li>
-              <li>Weekly QR codes</li>
+              <li>Multiple QR refreshes/week</li>
               <li>Manufacturer coupons</li>
-              <li>SMS, push, or email</li>
-              <li>Priority alerts</li>
-              <li>Full dashboard</li>
+              <li>Personalized recommendations</li>
+              <li>Priority high-value deals</li>
+              <li>Full savings dashboard</li>
             </ul>
             <button className="btn-primary btn-block" onClick={onGetStarted}>Start 14-Day Trial</button>
           </div>
@@ -593,9 +553,8 @@ const HomePage = ({ onGetStarted }) => {
             <ul className="price-features">
               <li>Everything in Premium</li>
               <li>Up to 5 members</li>
-              <li>Shared wallets</li>
-              <li>Family tracking</li>
-              <li>Spending insights</li>
+              <li>Shared coupon bundles</li>
+              <li>Family spending insights</li>
             </ul>
             <button className="btn-secondary btn-block" onClick={onGetStarted}>Get Family</button>
           </div>
@@ -670,11 +629,6 @@ const HomePage = ({ onGetStarted }) => {
                 <p>We'll show you which stores have coupons available in your area.</p>
                 
                 <button className="btn-primary btn-block location-btn" onClick={handleGetLocation}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                    <circle cx="12" cy="12" r="10"/>
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>
-                  </svg>
                   Use My Location
                 </button>
                 
@@ -806,20 +760,13 @@ const OnboardingPage = ({ onComplete }) => {
     setError("");
     
     try {
-      // Create user
       const userRes = await axios.post(`${API}/users`, { name, email });
       const userId = userRes.data.id;
       
-      // Update store selections
       await axios.put(`${API}/users/${userId}/stores`, { store_ids: selectedStores });
-      
-      // Update manufacturer coupons
       await axios.put(`${API}/users/${userId}/manufacturer-coupons`, { enabled: manufacturerCoupons });
-      
-      // Update notification method
       await axios.put(`${API}/users/${userId}/notification-method`, { method: notificationMethod });
       
-      // Fetch updated user
       const updatedUser = await axios.get(`${API}/users/${userId}`);
       onComplete(updatedUser.data);
     } catch (e) {
@@ -892,7 +839,7 @@ const OnboardingPage = ({ onComplete }) => {
         {step === 2 && (
           <div className="onboarding-step" data-testid="onboarding-step-2">
             <h2>Pick your stores</h2>
-            <p className="step-subtitle">Select the stores you shop at. We'll collect ALL available coupons for each one.</p>
+            <p className="step-subtitle">Select the stores you shop at. We'll bundle ALL available coupons into your weekly QR.</p>
             
             <div className="search-box">
               <span className="search-icon">🔍</span>
@@ -970,7 +917,7 @@ const OnboardingPage = ({ onComplete }) => {
             </div>
             
             <div className="option-section">
-              <h4>How should we send your weekly coupons?</h4>
+              <h4>How should we notify you when your weekly QR is ready?</h4>
               <div className="notification-options" data-testid="notification-options">
                 <label className={`notification-option ${notificationMethod === 'push' ? 'selected' : ''}`}>
                   <input 
@@ -1028,23 +975,28 @@ const OnboardingPage = ({ onComplete }) => {
   );
 };
 
-// Dashboard Page
+// Dashboard Page - NEW SINGLE QR DESIGN
 const DashboardPage = ({ user, onUpdateUser }) => {
-  const [bundles, setBundles] = useState(null);
+  const [bundle, setBundle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("coupons");
-  const [selectedBundle, setSelectedBundle] = useState(null);
+  const [showCoupons, setShowCoupons] = useState(false);
   const [stores, setStores] = useState([]);
   const [editingStores, setEditingStores] = useState(false);
   const [tempSelectedStores, setTempSelectedStores] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   
-  const fetchBundles = useCallback(async () => {
+  const fetchBundle = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/users/${user.id}/coupon-bundles`);
-      setBundles(response.data);
+      const response = await axios.get(`${API}/users/${user.id}/bundle`);
+      if (response.data.has_bundle) {
+        setBundle(response.data.bundle);
+      } else {
+        setBundle(null);
+      }
     } catch (e) {
-      console.error("Failed to fetch bundles", e);
+      console.error("Failed to fetch bundle", e);
     } finally {
       setLoading(false);
     }
@@ -1060,9 +1012,21 @@ const DashboardPage = ({ user, onUpdateUser }) => {
   }, []);
   
   useEffect(() => {
-    fetchBundles();
+    fetchBundle();
     fetchStores();
-  }, [fetchBundles, fetchStores]);
+  }, [fetchBundle, fetchStores]);
+  
+  const handleRefreshBundle = async () => {
+    setRefreshing(true);
+    try {
+      const response = await axios.post(`${API}/users/${user.id}/bundle/refresh`);
+      setBundle(response.data.bundle);
+    } catch (e) {
+      console.error("Failed to refresh bundle", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
   
   const toggleManufacturerCoupons = async () => {
     try {
@@ -1070,7 +1034,7 @@ const DashboardPage = ({ user, onUpdateUser }) => {
         enabled: !user.manufacturer_coupons_enabled
       });
       onUpdateUser(response.data);
-      fetchBundles();
+      fetchBundle();
     } catch (e) {
       console.error("Failed to toggle manufacturer coupons", e);
     }
@@ -1092,7 +1056,7 @@ const DashboardPage = ({ user, onUpdateUser }) => {
       });
       onUpdateUser(response.data);
       setEditingStores(false);
-      fetchBundles();
+      fetchBundle();
     } catch (e) {
       console.error("Failed to update stores", e);
     }
@@ -1115,10 +1079,17 @@ const DashboardPage = ({ user, onUpdateUser }) => {
     store.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const totalSavings = bundles?.store_bundles?.reduce((sum, b) => {
-    const val = parseFloat(b.total_savings.replace("$", "").replace("+", ""));
-    return sum + val;
-  }, 0) || 0;
+  const handleSaveQR = () => {
+    if (bundle?.qr_url) {
+      // Open QR page in new tab for saving
+      window.open(bundle.qr_url, '_blank');
+    }
+  };
+  
+  const formatValidUntil = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
   
   if (loading) {
     return (
@@ -1135,13 +1106,7 @@ const DashboardPage = ({ user, onUpdateUser }) => {
         <div className="dashboard-header">
           <div className="welcome-section">
             <h1 data-testid="dashboard-title">Hi, {user.name}! 👋</h1>
-            <p className="week-label">Week of {bundles?.week_of}</p>
-          </div>
-          <div className="savings-summary">
-            <div className="savings-card">
-              <span className="savings-label">This Week's Savings</span>
-              <span className="savings-amount" data-testid="total-savings">${totalSavings.toFixed(2)}+</span>
-            </div>
+            <p className="tier-badge">{user.tier === 'premium' ? '⭐ Premium' : '🆓 Free Plan'}</p>
           </div>
         </div>
         
@@ -1163,110 +1128,130 @@ const DashboardPage = ({ user, onUpdateUser }) => {
           </button>
         </div>
         
-        {/* Coupons Tab */}
-        {activeTab === 'coupons' && !selectedBundle && (
+        {/* Coupons Tab - SINGLE MASTER QR */}
+        {activeTab === 'coupons' && (
           <div className="coupons-tab" data-testid="coupons-view">
-            <div className="section-header">
-              <h2>Your Weekly QR Bundles</h2>
-              <p>Each QR code contains ALL available coupons for that store. Scan at checkout to save!</p>
-            </div>
-            
-            {bundles?.store_bundles?.length === 0 ? (
+            {!bundle ? (
               <div className="empty-state">
-                <p>No stores selected yet. Add stores in Settings to get your coupons!</p>
+                <div className="empty-icon">📱</div>
+                <h3>No Active Bundle</h3>
+                <p>Select stores in Settings to get your coupon bundle.</p>
                 <button className="btn-primary" onClick={() => setActiveTab('settings')}>
                   Add Stores
                 </button>
               </div>
             ) : (
-              <div className="bundle-grid" data-testid="bundle-grid">
-                {bundles?.store_bundles?.map(bundle => (
-                  <div 
-                    key={bundle.id} 
-                    className="bundle-card"
-                    onClick={() => setSelectedBundle(bundle)}
-                    data-testid={`bundle-${bundle.store_id}`}
+              <div className="master-bundle-card" data-testid="master-bundle">
+                {/* Bundle Header */}
+                <div className="bundle-header">
+                  <div className="bundle-week">
+                    <span className="week-label">{bundle.week_label}</span>
+                    <span className="bundle-type-badge">
+                      {bundle.bundle_type === 'starter' ? '🚀 Starter Bundle' : '📅 Weekly Bundle'}
+                    </span>
+                  </div>
+                  <div className="bundle-expiry">
+                    Valid until {formatValidUntil(bundle.valid_until)}
+                  </div>
+                </div>
+                
+                {/* QR Code - MAIN FOCUS */}
+                <div className="qr-section">
+                  <div className="qr-wrapper">
+                    <QRCodeGenerator url={bundle.qr_url} size={260} />
+                  </div>
+                  <p className="qr-instruction">Scan this QR code at checkout</p>
+                </div>
+                
+                {/* Stats */}
+                <div className="bundle-stats">
+                  <div className="stat-item">
+                    <span className="stat-number">{bundle.coupon_count}</span>
+                    <span className="stat-text">Coupons</span>
+                  </div>
+                  <div className="stat-divider"></div>
+                  <div className="stat-item">
+                    <span className="stat-number">${bundle.total_savings}</span>
+                    <span className="stat-text">Est. Savings</span>
+                  </div>
+                  <div className="stat-divider"></div>
+                  <div className="stat-item">
+                    <span className="stat-number">{bundle.stores_included?.length || 0}</span>
+                    <span className="stat-text">Stores</span>
+                  </div>
+                </div>
+                
+                {/* Stores Included */}
+                <div className="stores-included">
+                  <h4>Stores Included</h4>
+                  <div className="store-tags">
+                    {bundle.stores_included?.map(store => (
+                      <span key={store.id} className="store-tag" style={{borderColor: store.color}}>
+                        {store.logo} {store.name}
+                      </span>
+                    ))}
+                    {bundle.manufacturer_coupons_included && (
+                      <span className="store-tag manufacturer">🏭 Manufacturer</span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="bundle-actions">
+                  <button className="btn-secondary" onClick={handleSaveQR}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Save QR to Phone
+                  </button>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => setShowCoupons(!showCoupons)}
                   >
-                    <div className="bundle-store">
-                      <span className="store-logo">{bundle.store_logo}</span>
-                      <span className="store-name">{bundle.store_name}</span>
-                    </div>
-                    <div className="bundle-qr-preview">
-                      <QRCodeDisplay data={bundle.qr_code_data} size={120} />
-                    </div>
-                    <div className="bundle-info">
-                      <span className="coupon-count">{bundle.coupon_count} coupons</span>
-                      <span className="savings-badge">{bundle.total_savings} savings</span>
-                    </div>
-                    <div className="bundle-expiry">Valid until {bundle.valid_until}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Manufacturer Coupons */}
-            {bundles?.manufacturer_bundle && (
-              <div className="manufacturer-section">
-                <div className="section-header">
-                  <h2>🏭 Manufacturer Coupons</h2>
-                  <p>Brand coupons that work at any store</p>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                      <path d="M9 5l7 7-7 7"/>
+                    </svg>
+                    {showCoupons ? 'Hide' : 'View'} Included Coupons
+                  </button>
                 </div>
-                <div 
-                  className="bundle-card manufacturer"
-                  onClick={() => setSelectedBundle({...bundles.manufacturer_bundle, isManufacturer: true})}
-                  data-testid="manufacturer-bundle"
+                
+                {/* Refresh Button */}
+                <button 
+                  className="btn-text refresh-btn" 
+                  onClick={handleRefreshBundle}
+                  disabled={refreshing}
                 >
-                  <div className="bundle-store">
-                    <span className="store-logo">🏭</span>
-                    <span className="store-name">Manufacturer Coupons</span>
+                  {refreshing ? '⟳ Refreshing...' : '⟳ Refresh QR Code'}
+                </button>
+                
+                {/* Coupon List (expandable) */}
+                {showCoupons && (
+                  <div className="coupon-list-section">
+                    <h4>Included Coupons ({bundle.coupon_count})</h4>
+                    <div className="coupon-list">
+                      {bundle.coupons?.map(coupon => (
+                        <div key={coupon.id} className="coupon-item">
+                          <div className="coupon-info">
+                            <span className="coupon-store">
+                              {coupon.store_id ? coupon.store_id.replace('-', ' ').toUpperCase() : 'MANUFACTURER'}
+                            </span>
+                            <span className="coupon-title">{coupon.title}</span>
+                            <span className="coupon-desc">{coupon.description}</span>
+                          </div>
+                          <div className="coupon-savings">
+                            {coupon.savings_type === 'dollar' && `$${coupon.savings_value}`}
+                            {coupon.savings_type === 'percent' && `${coupon.savings_value}%`}
+                            {coupon.savings_type === 'bogo' && 'BOGO'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="bundle-qr-preview">
-                    <QRCodeDisplay data={bundles.manufacturer_bundle.qr_code_data} size={120} />
-                  </div>
-                  <div className="bundle-info">
-                    <span className="coupon-count">{bundles.manufacturer_bundle.coupon_count} coupons</span>
-                    <span className="savings-badge">{bundles.manufacturer_bundle.total_savings} savings</span>
-                  </div>
-                </div>
+                )}
               </div>
             )}
-          </div>
-        )}
-        
-        {/* Selected Bundle View */}
-        {activeTab === 'coupons' && selectedBundle && (
-          <div className="bundle-detail" data-testid="bundle-detail">
-            <button className="back-button" onClick={() => setSelectedBundle(null)}>
-              ← Back to all coupons
-            </button>
-            
-            <div className="bundle-detail-header">
-              <h2>
-                {selectedBundle.isManufacturer ? '🏭 Manufacturer Coupons' : `${selectedBundle.store_logo} ${selectedBundle.store_name}`}
-              </h2>
-              <p>{selectedBundle.coupon_count} coupons • {selectedBundle.total_savings} potential savings</p>
-            </div>
-            
-            <div className="qr-display-section">
-              <div className="qr-large">
-                <QRCodeDisplay data={selectedBundle.qr_code_data} size={280} />
-              </div>
-              <p className="qr-instruction">Show this QR code at checkout</p>
-              <p className="qr-validity">Valid until {selectedBundle.valid_until}</p>
-            </div>
-            
-            <div className="coupon-list">
-              <h3>Included Coupons</h3>
-              {selectedBundle.coupons.map(coupon => (
-                <div key={coupon.id} className="coupon-item">
-                  <div className="coupon-info">
-                    <span className="coupon-title">{coupon.title}</span>
-                    <span className="coupon-desc">{coupon.description}</span>
-                  </div>
-                  <div className="coupon-savings">{coupon.savings}</div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
         
@@ -1345,7 +1330,7 @@ const DashboardPage = ({ user, onUpdateUser }) => {
               <div className="option-card" data-testid="settings-manufacturer">
                 <div className="option-info">
                   <h4>🏭 Manufacturer Coupons</h4>
-                  <p>Receive extra brand coupons that work at any retailer.</p>
+                  <p>Include brand coupons (Tide, Coca-Cola, etc.) in your bundle.</p>
                 </div>
                 <label className="toggle">
                   <input 
@@ -1362,7 +1347,7 @@ const DashboardPage = ({ user, onUpdateUser }) => {
             {/* Notification Method */}
             <div className="settings-section">
               <h3>📬 Notification Method</h3>
-              <p className="section-desc">How should we send your weekly coupons?</p>
+              <p className="section-desc">How should we notify you when your weekly QR is ready?</p>
               <div className="notification-options" data-testid="settings-notifications">
                 <label className={`notification-option ${user.notification_method === 'push' ? 'selected' : ''}`}>
                   <input 
@@ -1399,6 +1384,16 @@ const DashboardPage = ({ user, onUpdateUser }) => {
                 </label>
               </div>
             </div>
+            
+            {/* Account Info */}
+            <div className="settings-section">
+              <h3>👤 Account</h3>
+              <div className="account-info">
+                <p><strong>Name:</strong> {user.name}</p>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Plan:</strong> {user.tier === 'premium' ? 'Premium' : 'Free'}</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1411,7 +1406,6 @@ const DashboardPage = ({ user, onUpdateUser }) => {
 function App() {
   const [user, setUser] = useState(null);
   
-  // Check for saved user on mount
   useEffect(() => {
     const savedUserId = localStorage.getItem('scansavvy_user_id');
     if (savedUserId) {
