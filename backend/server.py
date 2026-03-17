@@ -801,6 +801,30 @@ async def get_user_recommendations(user_id: str):
         "based_on": list(viewed_categories) if viewed_categories else ["your selected stores"]
     }
 
+# ============== ADMIN / MANUAL TRIGGER ENDPOINTS ==============
+
+@api_router.post("/admin/trigger-weekly-refresh")
+async def trigger_weekly_refresh():
+    """Manually trigger weekly bundle refresh for all users (for testing)"""
+    await generate_weekly_bundles_for_all_users()
+    return {
+        "success": True,
+        "message": "Weekly bundle refresh triggered for all users"
+    }
+
+@api_router.get("/admin/bundle-stats")
+async def get_bundle_stats():
+    """Get statistics about bundles in the system"""
+    total_bundles = await db.bundles.count_documents({})
+    active_bundles = await db.bundles.count_documents({"is_active": True})
+    total_users = await db.users.count_documents({})
+    
+    return {
+        "total_bundles": total_bundles,
+        "active_bundles": active_bundles,
+        "total_users": total_users
+    }
+
 # ============== LEGACY ENDPOINTS (for backward compatibility) ==============
 
 @api_router.get("/users/{user_id}/coupon-bundles")
