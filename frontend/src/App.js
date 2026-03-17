@@ -546,7 +546,7 @@ const HomePage = ({ onGetStarted }) => {
       </section>
 
       {/* Footer */}
-      <footer className="site-footer">
+      <footer className="site-footer light-footer">
         <div className="footer-inner">
           <div className="footer-brand">
             <div className="footer-logo-wrap">
@@ -558,24 +558,24 @@ const HomePage = ({ onGetStarted }) => {
           <div className="footer-nav">
             <div className="footer-nav-col">
               <h4>Product</h4>
-              <a href="#features">Features</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#how-it-works">How It Works</a>
+              <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); }}>Features</a>
+              <a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}>Pricing</a>
+              <a href="#how-it-works" onClick={(e) => { e.preventDefault(); document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); }}>How It Works</a>
             </div>
             <div className="footer-nav-col">
               <h4>Support</h4>
-              <a href="#">Help Center</a>
-              <a href="#">Contact Us</a>
+              <a href="mailto:help@scansavvy.com">Help Center</a>
+              <a href="mailto:info@scansavvy.com">Contact Us</a>
             </div>
             <div className="footer-nav-col">
               <h4>Legal</h4>
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
+              <a href="/privacy">Privacy</a>
+              <a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}>Terms</a>
             </div>
           </div>
         </div>
         <div className="footer-bottom-bar">
-          <p>© 2025 ScanSavvy. All rights reserved.</p>
+          <p>© 2026 ScanSavvy. All rights reserved. Built by MJV Holdings</p>
         </div>
       </footer>
 
