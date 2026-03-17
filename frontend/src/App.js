@@ -7,17 +7,134 @@ import { QRCodeSVG } from "qrcode.react";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// ============== LOCAL STORAGE HELPERS ==============
+const STORAGE_KEYS = {
+  SELECTED_STORES: 'scansavvy_selected_stores',
+  CURRENT_BUNDLE: 'scansavvy_current_bundle',
+  USER_ID: 'scansavvy_user_id'
+};
+
+// ============== CLEAN COUPON DATA (MVP) ==============
+// Small, realistic dataset - no duplicates, checkout-ready
+const STORE_COUPONS = {
+  walmart: [
+    { id: "wm-1", title: "$5 OFF $50 Grocery", discount: "$5 OFF", description: "Any grocery purchase $50+", expiry: "Mar 23, 2026" },
+    { id: "wm-2", title: "20% OFF Household", discount: "20% OFF", description: "Cleaning supplies & paper goods", expiry: "Mar 23, 2026" },
+    { id: "wm-3", title: "$3 OFF Tide Detergent", discount: "$3 OFF", description: "Tide 92oz or larger", expiry: "Mar 23, 2026" },
+    { id: "wm-4", title: "BOGO Snacks", discount: "BOGO 50%", description: "Select chips & snacks", expiry: "Mar 23, 2026" },
+  ],
+  target: [
+    { id: "tgt-1", title: "25% OFF Home Decor", discount: "25% OFF", description: "Select home decor items", expiry: "Mar 23, 2026" },
+    { id: "tgt-2", title: "$5 OFF $25 Beauty", discount: "$5 OFF", description: "Beauty products $25+", expiry: "Mar 23, 2026" },
+    { id: "tgt-3", title: "Buy 2 Get 1 Free Books", discount: "B2G1", description: "Select book titles", expiry: "Mar 23, 2026" },
+    { id: "tgt-4", title: "20% OFF Clothing", discount: "20% OFF", description: "Apparel & accessories", expiry: "Mar 23, 2026" },
+  ],
+  kroger: [
+    { id: "kr-1", title: "$1 OFF Kroger Brand", discount: "$1 OFF", description: "Any 3 Kroger products", expiry: "Mar 23, 2026" },
+    { id: "kr-2", title: "BOGO Cereal", discount: "BOGO", description: "Select cereals", expiry: "Mar 23, 2026" },
+    { id: "kr-3", title: "$2 OFF Fresh Meat", discount: "$2 OFF", description: "Beef, chicken, or pork", expiry: "Mar 23, 2026" },
+    { id: "kr-4", title: "30% OFF Produce", discount: "30% OFF", description: "Fresh fruits & vegetables", expiry: "Mar 23, 2026" },
+  ],
+  cvs: [
+    { id: "cvs-1", title: "40% OFF Vitamins", discount: "40% OFF", description: "All vitamins & supplements", expiry: "Mar 23, 2026" },
+    { id: "cvs-2", title: "$5 ExtraBucks", discount: "$5 BACK", description: "Spend $20 or more", expiry: "Mar 23, 2026" },
+    { id: "cvs-3", title: "BOGO Skincare", discount: "BOGO 50%", description: "Select skincare products", expiry: "Mar 23, 2026" },
+  ],
+  walgreens: [
+    { id: "wg-1", title: "$2 OFF Walgreens Brand", discount: "$2 OFF", description: "Any Walgreens product", expiry: "Mar 23, 2026" },
+    { id: "wg-2", title: "30% OFF Cosmetics", discount: "30% OFF", description: "Select cosmetics & beauty", expiry: "Mar 23, 2026" },
+    { id: "wg-3", title: "BOGO Candy", discount: "BOGO", description: "Select candy items", expiry: "Mar 23, 2026" },
+  ],
+  costco: [
+    { id: "cc-1", title: "$10 OFF $100", discount: "$10 OFF", description: "Orders $100 or more", expiry: "Mar 23, 2026" },
+    { id: "cc-2", title: "$5 OFF Kirkland", discount: "$5 OFF", description: "Any 2 Kirkland items", expiry: "Mar 23, 2026" },
+    { id: "cc-3", title: "15% OFF Electronics", discount: "15% OFF", description: "Select electronics", expiry: "Mar 23, 2026" },
+  ],
+  publix: [
+    { id: "pb-1", title: "BOGO Ice Cream", discount: "BOGO", description: "Publix brand ice cream", expiry: "Mar 23, 2026" },
+    { id: "pb-2", title: "$2 OFF Deli", discount: "$2 OFF", description: "Sliced deli meats", expiry: "Mar 23, 2026" },
+    { id: "pb-3", title: "20% OFF Bakery", discount: "20% OFF", description: "Fresh bakery products", expiry: "Mar 23, 2026" },
+  ],
+  aldi: [
+    { id: "al-1", title: "$3 OFF $30", discount: "$3 OFF", description: "Orders $30 or more", expiry: "Mar 23, 2026" },
+    { id: "al-2", title: "20% OFF Produce", discount: "20% OFF", description: "All fruits & vegetables", expiry: "Mar 23, 2026" },
+  ],
+};
+
+// Calculate savings from discount string
+const parseSavings = (discount) => {
+  if (discount.includes("$")) {
+    const match = discount.match(/\$(\d+)/);
+    return match ? parseFloat(match[1]) : 5;
+  }
+  if (discount.includes("%")) {
+    const match = discount.match(/(\d+)%/);
+    return match ? parseFloat(match[1]) * 0.2 : 4; // Estimate 20% of $20 avg item
+  }
+  if (discount.includes("BOGO")) return 5;
+  return 3;
+};
+
+// Generate bundle from selected stores (consistent, not random)
+const generateLocalBundle = (selectedStores) => {
+  const coupons = [];
+  let totalSavings = 0;
+  
+  selectedStores.forEach(storeId => {
+    const storeCoupons = STORE_COUPONS[storeId] || [];
+    storeCoupons.forEach(coupon => {
+      coupons.push({ ...coupon, storeId });
+      totalSavings += parseSavings(coupon.discount);
+    });
+  });
+  
+  // Generate consistent bundle ID based on stores (not random)
+  const bundleId = selectedStores.sort().join('-') + '-' + new Date().toISOString().slice(0, 10);
+  
+  return {
+    id: bundleId,
+    coupons,
+    totalSavings: totalSavings.toFixed(2),
+    couponCount: coupons.length,
+    weekLabel: "This Week's Savings",
+    validUntil: "March 23, 2026",
+    stores: selectedStores
+  };
+};
+
+// Save to local storage
+const saveToLocalStorage = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.error('Failed to save to localStorage', e);
+  }
+};
+
+// Load from local storage
+const loadFromLocalStorage = (key, defaultValue = null) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (e) {
+    console.error('Failed to load from localStorage', e);
+    return defaultValue;
+  }
+};
+
 // Production URL for QR codes (must be HTTPS and fully qualified)
 const getQRCodeUrl = (bundleId) => {
-  // Use production URL for QR codes
   return `${BACKEND_URL}/api/bundle/${bundleId}/view`;
 };
 
-// ============== REAL QR CODE COMPONENT ==============
-// Uses qrcode.react library for proper scannable QR codes
+// Get current bundle URL (for anonymous users)
+const getCurrentBundleUrl = () => {
+  return `${BACKEND_URL}/api/bundle/current/view`;
+};
 
+// ============== REAL QR CODE COMPONENT ==============
 const QRCodeDisplay = ({ bundleId, size = 256 }) => {
-  const qrUrl = getQRCodeUrl(bundleId);
+  const qrUrl = bundleId ? getQRCodeUrl(bundleId) : getCurrentBundleUrl();
   
   return (
     <div className="qr-code-container" style={{ background: 'white', padding: '16px', borderRadius: '8px' }}>
