@@ -1,104 +1,35 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { QRCodeSVG } from "qrcode.react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// ============== QR CODE GENERATOR ==============
+// Production URL for QR codes (must be HTTPS and fully qualified)
+const getQRCodeUrl = (bundleId) => {
+  // Use production URL for QR codes
+  return `${BACKEND_URL}/api/bundle/${bundleId}/view`;
+};
 
-const QRCodeGenerator = ({ url, size = 200 }) => {
-  const canvasRef = useRef(null);
-  
-  useEffect(() => {
-    if (!url || !canvasRef.current) return;
-    
-    // Generate real QR code using a simple algorithm
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const moduleCount = 25;
-    const moduleSize = size / moduleCount;
-    
-    // Clear canvas
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, size, size);
-    
-    // Generate QR pattern based on URL hash
-    const hash = url.split('').reduce((acc, char) => {
-      return ((acc << 5) - acc) + char.charCodeAt(0);
-    }, 0);
-    
-    ctx.fillStyle = '#1A2E44';
-    
-    // Draw finder patterns (corners)
-    const drawFinderPattern = (x, y) => {
-      // Outer square
-      for (let i = 0; i < 7; i++) {
-        for (let j = 0; j < 7; j++) {
-          if (i === 0 || i === 6 || j === 0 || j === 6 || 
-              (i >= 2 && i <= 4 && j >= 2 && j <= 4)) {
-            ctx.fillRect((x + i) * moduleSize, (y + j) * moduleSize, moduleSize, moduleSize);
-          }
-        }
-      }
-    };
-    
-    drawFinderPattern(0, 0);
-    drawFinderPattern(moduleCount - 7, 0);
-    drawFinderPattern(0, moduleCount - 7);
-    
-    // Draw timing patterns
-    for (let i = 8; i < moduleCount - 8; i++) {
-      if (i % 2 === 0) {
-        ctx.fillRect(i * moduleSize, 6 * moduleSize, moduleSize, moduleSize);
-        ctx.fillRect(6 * moduleSize, i * moduleSize, moduleSize, moduleSize);
-      }
-    }
-    
-    // Draw data modules based on URL hash
-    for (let y = 0; y < moduleCount; y++) {
-      for (let x = 0; x < moduleCount; x++) {
-        // Skip finder patterns and timing
-        if ((x < 9 && y < 9) || (x > moduleCount - 9 && y < 9) || (x < 9 && y > moduleCount - 9)) continue;
-        if (x === 6 || y === 6) continue;
-        
-        // Use hash to determine if module should be filled
-        const seed = (hash + x * 31 + y * 37) % 100;
-        if (seed < 45) {
-          ctx.fillRect(x * moduleSize, y * moduleSize, moduleSize * 0.9, moduleSize * 0.9);
-        }
-      }
-    }
-    
-    // Draw center logo area
-    const centerX = (moduleCount / 2 - 2) * moduleSize;
-    const centerY = (moduleCount / 2 - 2) * moduleSize;
-    const logoSize = 4 * moduleSize;
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(centerX, centerY, logoSize, logoSize);
-    
-    ctx.fillStyle = '#2DB89A';
-    ctx.beginPath();
-    ctx.roundRect(centerX + 2, centerY + 2, logoSize - 4, logoSize - 4, 4);
-    ctx.fill();
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = `bold ${logoSize * 0.5}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('S', centerX + logoSize/2, centerY + logoSize/2 + 2);
-    
-  }, [url, size]);
+// ============== REAL QR CODE COMPONENT ==============
+// Uses qrcode.react library for proper scannable QR codes
+
+const QRCodeDisplay = ({ bundleId, size = 256 }) => {
+  const qrUrl = getQRCodeUrl(bundleId);
   
   return (
-    <canvas 
-      ref={canvasRef} 
-      width={size} 
-      height={size} 
-      style={{ borderRadius: '12px', background: 'white' }}
-    />
+    <div className="qr-code-container" style={{ background: 'white', padding: '16px', borderRadius: '8px' }}>
+      <QRCodeSVG
+        value={qrUrl}
+        size={size}
+        level="M"
+        bgColor="#FFFFFF"
+        fgColor="#000000"
+        includeMargin={false}
+      />
+    </div>
   );
 };
 
