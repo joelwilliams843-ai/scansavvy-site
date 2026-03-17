@@ -3,6 +3,11 @@
   "appName": "ScanSavvy",
   "webDir": "build",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "url": "https://scansavvy.app/bundle",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
   }
 }
