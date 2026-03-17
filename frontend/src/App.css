@@ -856,6 +856,10 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   color: var(--white);
   padding: 56px 24px 24px;
 }
+.site-footer.light-footer {
+  background: var(--gray-50);
+  color: var(--text-dark);
+}
 .footer-inner {
   max-width: 1140px;
   margin: 0 auto;
@@ -874,6 +878,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .footer-brand-logo { width: 32px; height: 32px; }
 .footer-logo-wrap span { font-size: 1.15rem; font-weight: 700; }
 .footer-brand p { font-size: 0.9rem; color: rgba(255,255,255,0.65); }
+.light-footer .footer-brand p { color: var(--text-medium); }
+.light-footer .footer-logo-wrap span { color: var(--secondary); }
 .footer-nav { display: flex; gap: 64px; }
 .footer-nav-col h4 {
   font-size: 0.75rem;
@@ -889,7 +895,9 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   margin-bottom: 10px;
   transition: color 0.2s;
 }
+.light-footer .footer-nav-col a { color: var(--text-medium); }
 .footer-nav-col a:hover { color: var(--white); }
+.light-footer .footer-nav-col a:hover { color: var(--primary); }
 .footer-bottom-bar {
   max-width: 1140px;
   margin: 0 auto;
@@ -897,7 +905,9 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   border-top: 1px solid rgba(255,255,255,0.1);
   text-align: center;
 }
+.light-footer .footer-bottom-bar { border-top-color: var(--border); }
 .footer-bottom-bar p { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+.light-footer .footer-bottom-bar p { color: var(--text-light); }
 
 /* ============== MODAL ============== */
 .modal-overlay {
