@@ -6,6 +6,7 @@
     --secondary: #1A2E44;
     --secondary-light: #264653;
     --accent: #E9F9F6;
+    --accent-warm: #FFF8F0;
     --text-primary: #1A2E44;
     --text-secondary: #5A6E7F;
     --text-light: #8A9BAA;
@@ -219,7 +220,7 @@ header {
 }
 
 .hero-content p {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     color: var(--text-secondary);
     margin-bottom: 2.5rem;
     line-height: 1.7;
@@ -238,74 +239,114 @@ header {
     align-items: center;
 }
 
-.scan-animation {
+/* QR Code Showcase */
+.qr-showcase {
     position: relative;
-    width: 280px;
-    height: 500px;
+    width: 340px;
+    height: 420px;
 }
 
-.phone-frame {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
-    border-radius: 40px;
-    padding: 12px;
-    box-shadow: var(--shadow-xl);
-    position: relative;
-    overflow: hidden;
-}
-
-.phone-frame::before {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 24px;
-    background: var(--secondary);
-    border-radius: 12px;
-    z-index: 10;
-}
-
-.document-preview {
-    width: 100%;
-    height: 100%;
+.qr-card {
     background: var(--white);
-    border-radius: 28px;
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+.qr-code-frame {
+    background: var(--off-white);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.qr-code-svg {
+    width: 200px;
+    height: 200px;
+}
+
+.qr-tagline {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary);
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Floating Deal Bubbles */
+.floating-deals {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.deal-bubble {
+    position: absolute;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    padding: 50px 20px 20px;
-    gap: 12px;
+    align-items: center;
+    animation: float 3s ease-in-out infinite;
 }
 
-.document-preview::before,
-.document-preview::after {
-    content: '';
-    height: 12px;
-    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
-    border-radius: 4px;
+.deal-bubble .deal-percent {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--primary);
 }
 
-.document-preview::after {
-    width: 60%;
+.deal-bubble .deal-store {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
-.scan-line {
-    position: absolute;
-    top: 60px;
-    left: 20px;
-    right: 20px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--primary), transparent);
-    border-radius: 2px;
-    animation: scan 2.5s ease-in-out infinite;
-    box-shadow: 0 0 20px var(--primary);
+.deal-1 {
+    top: 20px;
+    right: -30px;
+    animation-delay: 0s;
 }
 
-@keyframes scan {
-    0%, 100% { top: 60px; opacity: 1; }
-    50% { top: calc(100% - 40px); opacity: 1; }
+.deal-2 {
+    bottom: 100px;
+    left: -40px;
+    animation-delay: 1s;
+}
+
+.deal-3 {
+    bottom: 40px;
+    right: -20px;
+    animation-delay: 2s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Value Proposition Banner */
+.value-prop {
+    background: var(--accent);
+    padding: 2.5rem 2rem;
+    text-align: center;
+}
+
+.value-statement {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--secondary);
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 /* Features Section */
@@ -319,21 +360,25 @@ header {
     font-size: 2.5rem;
     font-weight: 700;
     color: var(--secondary);
-    margin-bottom: 4rem;
+    margin-bottom: 1rem;
     letter-spacing: -0.5px;
+}
+
+.features .section-title {
+    margin-bottom: 4rem;
 }
 
 .features-grid {
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 2rem;
 }
 
 .feature-card {
     background: var(--white);
-    padding: 2.5rem;
+    padding: 2rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
@@ -347,19 +392,19 @@ header {
 }
 
 .feature-icon {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     background: var(--accent);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     color: var(--primary);
 }
 
 .feature-card h3 {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: var(--secondary);
     margin-bottom: 0.75rem;
@@ -368,12 +413,17 @@ header {
 .feature-card p {
     color: var(--text-secondary);
     line-height: 1.6;
+    font-size: 0.95rem;
 }
 
 /* How It Works Section */
 .how-it-works {
     padding: 6rem 2rem;
     background: var(--white);
+}
+
+.how-it-works .section-title {
+    margin-bottom: 4rem;
 }
 
 .steps-container {
@@ -410,7 +460,7 @@ header {
 }
 
 .step h3 {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: var(--secondary);
     margin-bottom: 0.75rem;
@@ -419,6 +469,7 @@ header {
 .step p {
     color: var(--text-secondary);
     line-height: 1.6;
+    font-size: 0.95rem;
 }
 
 .step-connector {
@@ -435,6 +486,17 @@ header {
     background: var(--off-white);
 }
 
+.pricing .section-title {
+    margin-bottom: 0.75rem;
+}
+
+.pricing-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 3.5rem;
+}
+
 .pricing-cards {
     max-width: 1100px;
     margin: 0 auto;
@@ -446,7 +508,7 @@ header {
 
 .pricing-card {
     background: var(--white);
-    padding: 2.5rem;
+    padding: 2.5rem 2rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
     border: 2px solid var(--border);
@@ -484,17 +546,17 @@ header {
 }
 
 .pricing-card h3 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 600;
     color: var(--secondary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .price {
-    font-size: 3rem;
+    font-size: 2.75rem;
     font-weight: 700;
     color: var(--secondary);
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .price span {
@@ -503,24 +565,32 @@ header {
     color: var(--text-secondary);
 }
 
+.price-description {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
 .features-list {
     text-align: left;
     margin-bottom: 2rem;
 }
 
 .features-list li {
-    padding: 0.75rem 0;
+    padding: 0.6rem 0;
     color: var(--text-secondary);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    font-size: 0.95rem;
 }
 
 .features-list li::before {
     content: '✓';
     color: var(--primary);
     font-weight: 700;
+    flex-shrink: 0;
 }
 
 .features-list li:last-child {
@@ -529,6 +599,13 @@ header {
 
 .pricing-card .btn {
     width: 100%;
+}
+
+.pricing-note {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-top: 2rem;
 }
 
 /* CTA Section */
@@ -552,9 +629,10 @@ header {
 }
 
 .cta-content p {
-    font-size: 1.25rem;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.15rem;
+    color: rgba(255, 255, 255, 0.85);
     margin-bottom: 2rem;
+    line-height: 1.7;
 }
 
 /* Footer */
@@ -645,8 +723,25 @@ footer {
         justify-content: center;
     }
 
+    .qr-showcase {
+        width: 300px;
+        height: 380px;
+    }
+
+    .deal-1 {
+        right: -10px;
+    }
+
+    .deal-2 {
+        left: -20px;
+    }
+
     .step-connector {
         display: none;
+    }
+
+    .value-statement {
+        font-size: 1.25rem;
     }
 }
 
@@ -667,6 +762,12 @@ footer {
         font-size: 2rem;
     }
 
+    .features-grid {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
     .pricing-cards {
         grid-template-columns: 1fr;
         max-width: 400px;
@@ -678,6 +779,20 @@ footer {
 
     .footer-links {
         gap: 2rem;
+    }
+
+    .qr-showcase {
+        width: 280px;
+        height: 360px;
+    }
+
+    .qr-code-svg {
+        width: 160px;
+        height: 160px;
+    }
+
+    .floating-deals {
+        display: none;
     }
 }
 
@@ -695,8 +810,16 @@ footer {
         font-size: 0.875rem;
     }
 
-    .scan-animation {
-        width: 220px;
-        height: 400px;
+    .value-statement {
+        font-size: 1.1rem;
+    }
+
+    .qr-showcase {
+        width: 260px;
+        height: 340px;
+    }
+
+    .qr-card {
+        padding: 1.5rem;
     }
 }
