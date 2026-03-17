@@ -575,7 +575,7 @@ const HomePage = ({ onGetStarted }) => {
           </div>
         </div>
         <div className="footer-bottom-bar">
-          <p>© 2026 ScanSavvy. All rights reserved. Built by MJV Holdings</p>
+          <p>© 2026 ScanSavvy. All rights reserved. Built by <a href="https://mjvholdings.com/" target="_blank" rel="noopener noreferrer" className="mjv-link">MJV Holdings</a></p>
         </div>
       </footer>
 
