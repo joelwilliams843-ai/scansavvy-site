@@ -16,17 +16,7 @@ const Header = ({ user, onLogout }) => {
     <header className="header">
       <nav className="navbar">
         <div className="logo-container" onClick={() => navigate("/")} style={{cursor: "pointer"}}>
-          <div className="logo-icon">
-            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="40" height="40" rx="10" fill="#3EBCAB"/>
-              <rect x="8" y="8" width="10" height="10" rx="2" fill="white"/>
-              <rect x="22" y="8" width="10" height="10" rx="2" fill="white"/>
-              <rect x="8" y="22" width="10" height="10" rx="2" fill="white"/>
-              <rect x="22" y="22" width="6" height="6" rx="1" fill="white"/>
-              <rect x="28" y="26" width="4" height="6" rx="1" fill="white"/>
-              <rect x="22" y="28" width="6" height="4" rx="1" fill="white"/>
-            </svg>
-          </div>
+          <img src="/assets/scansavvy-logo.png" alt="ScanSavvy" className="logo-image" />
           <h1>ScanSavvy</h1>
         </div>
         
@@ -50,7 +40,7 @@ const Header = ({ user, onLogout }) => {
             </>
           ) : (
             <button className="btn-primary" onClick={() => navigate("/onboarding")} data-testid="nav-get-started">
-              Get My Coupons
+              Get Started
             </button>
           )}
         </div>
