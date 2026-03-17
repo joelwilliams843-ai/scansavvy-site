@@ -1089,9 +1089,30 @@ const DashboardPage = ({ user, onUpdateUser }) => {
                 {/* QR Code - MAIN FOCUS */}
                 <div className="qr-section">
                   <div className="qr-wrapper">
-                    <QRCodeGenerator url={bundle.qr_url} size={260} />
+                    <QRCodeDisplay bundleId={bundle.id} size={256} />
                   </div>
                   <p className="qr-instruction">Scan this QR code at checkout</p>
+                  
+                  {/* Fallback URL */}
+                  <div className="qr-fallback">
+                    <a 
+                      href={getQRCodeUrl(bundle.id)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="qr-url-link"
+                    >
+                      {getQRCodeUrl(bundle.id)}
+                    </a>
+                  </div>
+                  
+                  {/* Test QR Button */}
+                  <button 
+                    className="btn-secondary test-qr-btn"
+                    onClick={() => window.open(getQRCodeUrl(bundle.id), '_blank')}
+                    data-testid="test-qr-btn"
+                  >
+                    🔗 Test QR Code Link
+                  </button>
                 </div>
                 
                 {/* Stats */}
