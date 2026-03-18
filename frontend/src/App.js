@@ -4,7 +4,23 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-ro
 import axios from "axios";
 import { QRCodeSVG } from "qrcode.react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// ============== URL CONFIGURATION ==============
+// Priority: ENV var > window.location.origin fallback
+const getBaseUrl = () => {
+  // First try the environment variable
+  if (process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
+  }
+  // Fallback to current origin (works in production)
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin;
+  }
+  // Last resort - should never happen in browser
+  console.error('ScanSavvy: No base URL available - QR codes will not work correctly');
+  return '';
+};
+
+const BACKEND_URL = getBaseUrl();
 const API = `${BACKEND_URL}/api`;
 
 // ============== LOCAL STORAGE HELPERS ==============
@@ -124,28 +140,76 @@ const loadFromLocalStorage = (key, defaultValue = null) => {
 
 // Production URL for QR codes (must be HTTPS and fully qualified)
 const getQRCodeUrl = (bundleId) => {
+  if (!BACKEND_URL) {
+    console.error('ScanSavvy: Cannot generate QR URL - no base URL configured');
+    return null;
+  }
   return `${BACKEND_URL}/api/bundle/${bundleId}/view`;
 };
 
 // Get current bundle URL (for anonymous users)
 const getCurrentBundleUrl = () => {
+  if (!BACKEND_URL) {
+    console.error('ScanSavvy: Cannot generate QR URL - no base URL configured');
+    return null;
+  }
   return `${BACKEND_URL}/api/bundle/current/view`;
 };
 
 // ============== REAL QR CODE COMPONENT ==============
-const QRCodeDisplay = ({ bundleId, size = 256 }) => {
+const QRCodeDisplay = ({ bundleId, size = 256, showLink = true }) => {
   const qrUrl = bundleId ? getQRCodeUrl(bundleId) : getCurrentBundleUrl();
   
+  // Guard: Don't render broken QR if URL is invalid
+  if (!qrUrl || qrUrl.startsWith('undefined') || qrUrl.startsWith('/api')) {
+    return (
+      <div className="qr-error-container">
+        <div className="qr-error-icon">⚠️</div>
+        <p className="qr-error-text">QR code temporarily unavailable</p>
+        <p className="qr-error-hint">Your coupons are listed below</p>
+      </div>
+    );
+  }
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(qrUrl).then(() => {
+      alert('Link copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  };
+  
   return (
-    <div className="qr-code-container" style={{ background: 'white', padding: '16px', borderRadius: '8px' }}>
-      <QRCodeSVG
-        value={qrUrl}
-        size={size}
-        level="M"
-        bgColor="#FFFFFF"
-        fgColor="#000000"
-        includeMargin={false}
-      />
+    <div className="qr-code-wrapper">
+      <div className="qr-code-container" style={{ background: 'white', padding: '16px', borderRadius: '8px' }}>
+        <QRCodeSVG
+          value={qrUrl}
+          size={size}
+          level="M"
+          bgColor="#FFFFFF"
+          fgColor="#000000"
+          includeMargin={false}
+        />
+      </div>
+      {showLink && (
+        <div className="qr-link-section">
+          <a 
+            href={qrUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="qr-open-link"
+          >
+            🔗 Open coupon bundle
+          </a>
+          <button 
+            onClick={copyToClipboard}
+            className="qr-copy-btn"
+            title="Copy link"
+          >
+            📋 Copy link
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -824,7 +888,6 @@ const OnboardingPage = ({ onComplete }) => {
   const [selectedStores, setSelectedStores] = useState([]); // Always start empty
   const [manufacturerCoupons, setManufacturerCoupons] = useState(false);
   const [notificationMethod, setNotificationMethod] = useState("push");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [stores, setStores] = useState(DEFAULT_STORES);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -941,12 +1004,6 @@ const OnboardingPage = ({ onComplete }) => {
     }
   };
   
-  // Validate phone number
-  const validatePhone = (phone) => {
-    const cleaned = phone.replace(/\D/g, '');
-    return cleaned.length >= 10;
-  };
-  
   // Validate email
   const validateEmail = (emailStr) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
@@ -957,12 +1014,7 @@ const OnboardingPage = ({ onComplete }) => {
     setFieldErrors({});
     setError("");
     
-    // Validate based on notification method
-    if (notificationMethod === 'sms' && !validatePhone(phoneNumber)) {
-      setFieldErrors({ phone: "Please enter a valid 10-digit phone number" });
-      return;
-    }
-    
+    // Validate email if selected
     if (notificationMethod === 'email' && !validateEmail(email)) {
       setFieldErrors({ email: "Please enter a valid email address" });
       return;
@@ -1000,9 +1052,6 @@ const OnboardingPage = ({ onComplete }) => {
       saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
       saveToLocalStorage('scansavvy_onboarding_completed', true);
       saveToLocalStorage('scansavvy_notification_method', notificationMethod);
-      if (notificationMethod === 'sms') {
-        saveToLocalStorage('scansavvy_phone', phoneNumber);
-      }
       
       // Navigate to bundle page directly
       navigate('/bundle');
@@ -1346,25 +1395,6 @@ const OnboardingPage = ({ onComplete }) => {
                 </div>
                 
                 <div 
-                  className={`notification-card ${notificationMethod === 'sms' ? 'selected' : ''}`}
-                  onClick={() => handleNotificationChange('sms')}
-                  data-testid="notification-sms"
-                >
-                  <div className="notification-card-icon">💬</div>
-                  <div className="notification-card-content">
-                    <span className="notification-card-title">Text Message</span>
-                    <span className="notification-card-desc">Receive SMS with your QR link</span>
-                  </div>
-                  <div className="notification-card-check">
-                    {notificationMethod === 'sms' && (
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                
-                <div 
                   className={`notification-card ${notificationMethod === 'email' ? 'selected' : ''}`}
                   onClick={() => handleNotificationChange('email')}
                   data-testid="notification-email"
@@ -1384,29 +1414,11 @@ const OnboardingPage = ({ onComplete }) => {
                 </div>
               </div>
               
-              {/* Conditional Input for SMS */}
-              {notificationMethod === 'sms' && (
-                <div className="conditional-input-section" data-testid="phone-input-section">
-                  <label htmlFor="phone">Your Phone Number</label>
-                  <input 
-                    type="tel"
-                    id="phone"
-                    value={phoneNumber}
-                    onChange={e => {
-                      const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
-                      setPhoneNumber(cleaned);
-                      if (fieldErrors.phone) setFieldErrors({});
-                    }}
-                    placeholder="(555) 123-4567"
-                    className={fieldErrors.phone ? 'input-error' : ''}
-                    data-testid="input-phone"
-                  />
-                  {fieldErrors.phone && (
-                    <span className="field-error">{fieldErrors.phone}</span>
-                  )}
-                  <p className="input-hint">We'll text you when your weekly QR is ready</p>
-                </div>
-              )}
+              {/* In-app availability note */}
+              <div className="inapp-availability-note">
+                <span className="note-icon">📱</span>
+                <span className="note-text">Your weekly QR will always be available in-app on your Dashboard</span>
+              </div>
               
               {/* Conditional hint for Email */}
               {notificationMethod === 'email' && (
@@ -1445,7 +1457,6 @@ const OnboardingPage = ({ onComplete }) => {
                 <span className="summary-label">Notifications:</span>
                 <span className="summary-value">
                   {notificationMethod === 'push' && '📲 Push'}
-                  {notificationMethod === 'sms' && '💬 Text'}
                   {notificationMethod === 'email' && '📧 Email'}
                 </span>
               </div>
@@ -1889,17 +1900,6 @@ const DashboardPage = ({ user, onUpdateUser }) => {
                   <span className="option-icon">📲</span>
                   <span className="option-label">Push Notification</span>
                 </label>
-                <label className={`notification-option ${user.notification_method === 'sms' ? 'selected' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="notification" 
-                    value="sms"
-                    checked={user.notification_method === 'sms'}
-                    onChange={e => updateNotificationMethod(e.target.value)}
-                  />
-                  <span className="option-icon">💬</span>
-                  <span className="option-label">Text Message</span>
-                </label>
                 <label className={`notification-option ${user.notification_method === 'email' ? 'selected' : ''}`}>
                   <input 
                     type="radio" 
@@ -1912,6 +1912,7 @@ const DashboardPage = ({ user, onUpdateUser }) => {
                   <span className="option-label">Email</span>
                 </label>
               </div>
+              <p className="settings-hint">Your weekly QR is always available in-app on your Dashboard</p>
             </div>
             
             {/* Account Info */}

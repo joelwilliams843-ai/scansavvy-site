@@ -37,6 +37,17 @@ Build a full-stack application called "ScanSavvy" - a smart savings assistant th
 ## What's Been Implemented
 
 ### March 18, 2026
+- [x] **QR Code Bug Fix:**
+  - Fixed `undefined/api/bundle/...` URL issue 
+  - Added `getBaseUrl()` with ENV var → window.location.origin fallback
+  - Added guard to prevent broken QR display
+  - Added "Open coupon bundle" link and "Copy link" button
+  - QR now opens mobile-optimized coupon page correctly
+- [x] **Removed SMS Option:**
+  - Removed Text Message notification option (no approved SMS number)
+  - Removed phone input field and validation
+  - Added "always available in-app" note
+  - Only Push and Email options remain
 - [x] **Onboarding Flow Bug Fixes:**
   - Removed default store auto-selection (Step 2 starts with 0 selected)
   - Fixed store selection logic (add/remove via cards, search, pills)
