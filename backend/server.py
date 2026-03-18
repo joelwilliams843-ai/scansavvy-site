@@ -658,19 +658,32 @@ async def get_supabase_bundle(bundle_id: str):
         return bundle_data
 
 @api_router.post("/supabase/bundles/create")
-async def create_supabase_user_bundle(
-    store_ids: List[str],
-    user_name: str = "Guest",
-    user_email: str = None
-):
+async def create_supabase_user_bundle(request: Request):
     """Create a user bundle from selected stores"""
-    async with AsyncSessionLocal() as db:
-        user_bundle = await create_user_bundle(db, store_ids, user_name, user_email)
-        return {
-            "success": True,
-            "bundle_id": user_bundle.id,
-            "qr_url": f"/api/bundle/{user_bundle.id}/view"
-        }
+    try:
+        body = await request.json()
+        store_ids = body.get("store_ids", [])
+        user_name = body.get("user_name", "Guest")
+        user_email = body.get("user_email", None)
+        
+        if not store_ids:
+            raise HTTPException(status_code=400, detail="store_ids is required")
+        
+        async with AsyncSessionLocal() as db:
+            user_bundle = await create_user_bundle(db, store_ids, user_name, user_email)
+            
+            # Also fetch the full bundle data to return
+            bundle_data = await get_bundle_with_coupons(db, user_bundle.id)
+            
+            return {
+                "success": True,
+                "bundle_id": user_bundle.id,
+                "qr_url": f"/api/bundle/{user_bundle.id}/view",
+                "bundle": bundle_data
+            }
+    except Exception as e:
+        print(f"Error creating bundle: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ============== REAL BUNDLE VIEW PAGE (SUPABASE-BACKED) ==============
 @api_router.get("/bundle/{bundle_id}/view", response_class=HTMLResponse)

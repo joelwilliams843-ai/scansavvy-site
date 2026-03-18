@@ -92,6 +92,38 @@ const parseSavings = (discount) => {
 };
 
 // Generate bundle from selected stores (consistent, not random)
+// Create a real bundle via Supabase API
+const createSupabaseBundle = async (selectedStores, userName = "Guest", userEmail = null) => {
+  try {
+    const response = await axios.post(`${API}/supabase/bundles/create`, {
+      store_ids: selectedStores,
+      user_name: userName,
+      user_email: userEmail
+    });
+    
+    if (response.data.success && response.data.bundle) {
+      const bundleData = response.data.bundle;
+      return {
+        id: bundleData.id,
+        week_label: bundleData.week_label,
+        valid_until: bundleData.valid_until,
+        total_savings: bundleData.total_savings,
+        coupon_count: bundleData.coupon_count,
+        coupons: bundleData.coupons || [],
+        stores_included: bundleData.stores || selectedStores.map(id => ({ id, name: id })),
+        bundle_type: 'weekly',
+        qr_url: response.data.qr_url
+      };
+    }
+    throw new Error("Failed to create bundle");
+  } catch (error) {
+    console.error("Supabase bundle creation failed:", error);
+    // Fallback to local mock if API fails
+    return generateLocalBundle(selectedStores);
+  }
+};
+
+// Fallback mock bundle generator (only used if Supabase fails)
 const generateLocalBundle = (selectedStores) => {
   const coupons = [];
   let totalSavings = 0;
@@ -105,16 +137,17 @@ const generateLocalBundle = (selectedStores) => {
   });
   
   // Generate consistent bundle ID based on stores (not random)
-  const bundleId = selectedStores.sort().join('-') + '-' + new Date().toISOString().slice(0, 10);
+  const bundleId = 'LOCAL-' + selectedStores.sort().join('-').slice(0, 20);
   
   return {
     id: bundleId,
     coupons,
-    totalSavings: totalSavings.toFixed(2),
-    couponCount: coupons.length,
-    weekLabel: "This Week's Savings",
-    validUntil: "March 23, 2026",
-    stores: selectedStores
+    total_savings: totalSavings.toFixed(2),
+    coupon_count: coupons.length,
+    week_label: "This Week's Savings",
+    valid_until: "March 23, 2026",
+    stores_included: selectedStores.map(id => ({ id, name: id })),
+    bundle_type: 'local'
   };
 };
 
@@ -1036,6 +1069,10 @@ const OnboardingPage = ({ onComplete }) => {
       await axios.put(`${API}/users/${userId}/manufacturer-coupons`, { enabled: manufacturerCoupons });
       await axios.put(`${API}/users/${userId}/notification-method`, { method: notificationMethod });
       
+      // Create a real Supabase bundle
+      const newBundle = await createSupabaseBundle(selectedStores, name, email);
+      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+      
       const updatedUser = await axios.get(`${API}/users/${userId}`);
       
       // Mark onboarding as completed
@@ -1044,17 +1081,24 @@ const OnboardingPage = ({ onComplete }) => {
       
       onComplete(updatedUser.data);
     } catch (e) {
-      console.error("API error, falling back to local MVP", e);
+      console.error("API error, falling back to Supabase bundle", e);
       
-      // MVP Fallback: Save locally and proceed to bundle page
-      const localBundle = generateLocalBundle(selectedStores);
-      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, localBundle);
-      saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
-      saveToLocalStorage('scansavvy_onboarding_completed', true);
-      saveToLocalStorage('scansavvy_notification_method', notificationMethod);
-      
-      // Navigate to bundle page directly
-      navigate('/bundle');
+      // Try Supabase bundle even if MongoDB fails
+      try {
+        const newBundle = await createSupabaseBundle(selectedStores, name, email);
+        saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+        saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+        saveToLocalStorage('scansavvy_onboarding_completed', true);
+        saveToLocalStorage('scansavvy_notification_method', notificationMethod);
+        navigate('/bundle');
+      } catch (supabaseError) {
+        console.error("Supabase also failed, using local fallback", supabaseError);
+        const localBundle = generateLocalBundle(selectedStores);
+        saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, localBundle);
+        saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+        saveToLocalStorage('scansavvy_onboarding_completed', true);
+        navigate('/bundle');
+      }
     } finally {
       setLoading(false);
     }
@@ -1537,8 +1581,14 @@ const DashboardPage = ({ user, onUpdateUser }) => {
   const handleRefreshBundle = async () => {
     setRefreshing(true);
     try {
-      const response = await axios.post(`${API}/users/${user.id}/bundle/refresh`);
-      setBundle(response.data.bundle);
+      // Create a real Supabase bundle
+      const newBundle = await createSupabaseBundle(
+        user.selected_stores || ['kroger'],
+        user.name || 'Guest',
+        user.email
+      );
+      setBundle(newBundle);
+      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
     } catch (e) {
       console.error("Failed to refresh bundle", e);
     } finally {
@@ -1991,16 +2041,19 @@ const QuickBundlePage = () => {
     { id: 'aldi', name: 'ALDI', color: '#00529B' },
   ];
   
-  // Generate bundle when stores change
+  // Generate bundle when stores change - USE SUPABASE
   useEffect(() => {
-    if (selectedStores.length > 0) {
-      const newBundle = generateLocalBundle(selectedStores);
-      setBundle(newBundle);
-      saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
-      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
-    } else {
-      setBundle(null);
-    }
+    const createBundle = async () => {
+      if (selectedStores.length > 0) {
+        const newBundle = await createSupabaseBundle(selectedStores, "Guest");
+        setBundle(newBundle);
+        saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+        saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+      } else {
+        setBundle(null);
+      }
+    };
+    createBundle();
   }, [selectedStores]);
   
   const toggleStore = (storeId) => {
@@ -2012,9 +2065,9 @@ const QuickBundlePage = () => {
     });
   };
   
-  const handleRefreshBundle = () => {
+  const handleRefreshBundle = async () => {
     if (selectedStores.length > 0) {
-      const newBundle = generateLocalBundle(selectedStores);
+      const newBundle = await createSupabaseBundle(selectedStores, "Guest");
       setBundle(newBundle);
       saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
     }
