@@ -36,6 +36,16 @@ Build a full-stack application called "ScanSavvy" - a smart savings assistant th
 
 ## What's Been Implemented
 
+### March 18, 2026
+- [x] **Onboarding Flow Bug Fixes:**
+  - Removed default store auto-selection (Step 2 starts with 0 selected)
+  - Fixed store selection logic (add/remove via cards, search, pills)
+  - Fixed Step 3 notification options with visual selection
+  - Added conditional inputs: phone for SMS, email confirm for Email, push hint
+  - Added summary section showing user's choices
+  - Implemented MVP fallback (localStorage + navigate to /bundle if API fails)
+  - All 15 tests passed
+
 ### March 17, 2026
 - [x] **SPA Routing Fix** - Added `_redirects` file for Netlify deployment
 - [x] **Production Bug Fix** - Fixed `undefined.filter()` error with safe array fallbacks
