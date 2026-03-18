@@ -36,7 +36,20 @@ Build a full-stack application called "ScanSavvy" - a smart savings assistant th
 
 ## What's Been Implemented
 
-### March 2026
+### March 17, 2026
+- [x] **SPA Routing Fix** - Added `_redirects` file for Netlify deployment
+- [x] **Production Bug Fix** - Fixed `undefined.filter()` error with safe array fallbacks
+- [x] **Onboarding Step 2 Overhaul** - Complete redesign of store selection:
+  - Selected stores pills with remove buttons
+  - Enhanced search with real-time dropdown
+  - Popular Stores section (always visible)
+  - More Stores section
+  - Fixed bottom action bar
+  - Dynamic "Continue with X stores" button
+  - Mobile responsive design
+  - All tests passed (18/18)
+
+### Previous Session
 - [x] Full-stack app with React frontend + FastAPI backend
 - [x] User onboarding flow (name, email, store selection, notifications)
 - [x] Dashboard with single master QR code display
@@ -49,17 +62,16 @@ Build a full-stack application called "ScanSavvy" - a smart savings assistant th
 - [x] Social activity feed (Venmo-style "Top Savers")
 - [x] JSON-LD structured data for SEO
 - [x] Capacitor setup for Android builds
-- [x] **SPA routing fix** - Added `_redirects` file for Netlify deployment
 
 ## Current Status
 - **Preview Environment:** Working ✅
-- **Live Site (scansavvy.app):** Needs redeployment with routing fix
-- **Android Build:** In progress (environment set up, Gradle build pending)
+- **Live Site (scansavvy.app):** Needs redeployment with all fixes
+- **Android Build:** Pending (environment set up, ready to resume)
 
 ## Prioritized Backlog
 
 ### P0 (Critical)
-- [ ] Deploy routing fix to live site
+- [ ] Deploy all fixes to live site (scansavvy.app)
 - [ ] Complete Android App Bundle (.AAB) generation
 
 ### P1 (High Priority)
@@ -90,8 +102,11 @@ Build a full-stack application called "ScanSavvy" - a smart savings assistant th
 - **Bundle:** id, user_id, coupons, total_savings, valid_until, week_label
 - **Coupon:** id, store_id, title, description, discount, expiry
 
+## Test Reports
+- `/app/test_reports/iteration_8.json` - Onboarding Step 2 tests (18/18 passed)
+
 ## Known Technical Debt
-1. **Monolithic Frontend:** `/app/frontend/src/App.js` is 1600+ lines and needs refactoring into:
+1. **Monolithic Frontend:** `/app/frontend/src/App.js` is 1800+ lines and needs refactoring into:
    - Pages (Home, Onboarding, Dashboard, Privacy)
    - Components (Header, Footer, QRCode, StoreCard, etc.)
    - Hooks (useLocalStorage, useBundle, etc.)
