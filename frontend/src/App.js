@@ -2024,16 +2024,17 @@ const PrivacyPage = () => {
 
 const QuickBundlePage = () => {
   const [selectedStores, setSelectedStores] = useState(() => 
-    loadFromLocalStorage(STORAGE_KEYS.SELECTED_STORES, ['walmart', 'target'])
+    loadFromLocalStorage(STORAGE_KEYS.SELECTED_STORES, ['kroger'])
   );
   const [bundle, setBundle] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [showStoreSelector, setShowStoreSelector] = useState(false);
   const [showCoupons, setShowCoupons] = useState(true);
   
   const availableStores = [
+    { id: 'kroger', name: 'Kroger', color: '#0C3E80' },
     { id: 'walmart', name: 'Walmart', color: '#0071DC' },
     { id: 'target', name: 'Target', color: '#CC0000' },
-    { id: 'kroger', name: 'Kroger', color: '#0C3E80' },
     { id: 'cvs', name: 'CVS', color: '#CC0000' },
     { id: 'walgreens', name: 'Walgreens', color: '#E31837' },
     { id: 'costco', name: 'Costco', color: '#E31837' },
@@ -2044,11 +2045,20 @@ const QuickBundlePage = () => {
   // Generate bundle when stores change - USE SUPABASE
   useEffect(() => {
     const createBundle = async () => {
-      if (selectedStores.length > 0) {
-        const newBundle = await createSupabaseBundle(selectedStores, "Guest");
-        setBundle(newBundle);
-        saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
-        saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+      const stores = selectedStores || [];
+      if (stores.length > 0) {
+        setLoading(true);
+        try {
+          const newBundle = await createSupabaseBundle(stores, "Guest");
+          setBundle(newBundle);
+          saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, stores);
+          saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+        } catch (e) {
+          console.error("Failed to create bundle:", e);
+          setBundle(null);
+        } finally {
+          setLoading(false);
+        }
       } else {
         setBundle(null);
       }
@@ -2066,10 +2076,18 @@ const QuickBundlePage = () => {
   };
   
   const handleRefreshBundle = async () => {
-    if (selectedStores.length > 0) {
-      const newBundle = await createSupabaseBundle(selectedStores, "Guest");
-      setBundle(newBundle);
-      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+    const stores = selectedStores || [];
+    if (stores.length > 0) {
+      setLoading(true);
+      try {
+        const newBundle = await createSupabaseBundle(stores, "Guest");
+        setBundle(newBundle);
+        saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, newBundle);
+      } catch (e) {
+        console.error("Failed to refresh bundle:", e);
+      } finally {
+        setLoading(false);
+      }
     }
   };
   
@@ -2077,6 +2095,16 @@ const QuickBundlePage = () => {
     const store = availableStores.find(s => s.id === storeId);
     return store ? store.name : storeId;
   };
+  
+  // Safe accessors for bundle properties
+  const bundleWeekLabel = bundle?.week_label || bundle?.weekLabel || "This Week's Savings";
+  const bundleCouponCount = bundle?.coupon_count || bundle?.couponCount || 0;
+  const bundleTotalSavings = bundle?.total_savings || bundle?.totalSavings || 0;
+  const bundleValidUntil = bundle?.valid_until || bundle?.validUntil || "N/A";
+  const bundleStores = bundle?.stores_included || bundle?.stores || [];
+  const bundleCoupons = bundle?.coupons || [];
+  
+  const storesArray = selectedStores || [];
   
   return (
     <div className="dashboard-page">
@@ -2092,7 +2120,7 @@ const QuickBundlePage = () => {
         {/* Store Selection Bar */}
         <div className="store-selection-bar">
           <div className="selected-stores-display">
-            {selectedStores.map(storeId => (
+            {storesArray.map(storeId => (
               <span key={storeId} className="store-chip-small">
                 {getStoreName(storeId)}
               </span>
@@ -2112,42 +2140,52 @@ const QuickBundlePage = () => {
             {availableStores.map(store => (
               <button
                 key={store.id}
-                className={`store-btn ${selectedStores.includes(store.id) ? 'selected' : ''}`}
+                className={`store-btn ${storesArray.includes(store.id) ? 'selected' : ''}`}
                 onClick={() => toggleStore(store.id)}
-                style={{ borderColor: selectedStores.includes(store.id) ? store.color : undefined }}
+                style={{ borderColor: storesArray.includes(store.id) ? store.color : undefined }}
               >
                 {store.name}
-                {selectedStores.includes(store.id) && <span className="check-mark">✓</span>}
+                {storesArray.includes(store.id) && <span className="check-mark">✓</span>}
               </button>
             ))}
           </div>
         )}
         
+        {/* Loading State */}
+        {loading && (
+          <div className="loading-state" style={{ padding: '40px', textAlign: 'center' }}>
+            <div className="spinner-small" style={{ margin: '0 auto 16px' }}></div>
+            <p>Creating your bundle...</p>
+          </div>
+        )}
+        
         {/* Bundle Display */}
-        {bundle && (
+        {!loading && bundle && (
           <div className="master-bundle-card" data-testid="master-bundle">
             {/* Bundle Header */}
             <div className="bundle-header">
               <div className="bundle-week">
-                <span className="week-label">{bundle.weekLabel}</span>
+                <span className="week-label">{bundleWeekLabel}</span>
                 <span className="bundle-type-badge">
-                  {bundle.couponCount} coupons from {bundle.stores.length} store{bundle.stores.length > 1 ? 's' : ''}
+                  {bundleCouponCount} coupons from {bundleStores.length || storesArray.length} store{(bundleStores.length || storesArray.length) > 1 ? 's' : ''}
                 </span>
               </div>
               <div className="bundle-expiry">
-                Valid until {bundle.validUntil}
+                Valid until {typeof bundleValidUntil === 'string' && bundleValidUntil.includes('T') 
+                  ? new Date(bundleValidUntil).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                  : bundleValidUntil}
               </div>
             </div>
             
             {/* Stats */}
             <div className="bundle-stats">
               <div className="stat-item">
-                <span className="stat-number">{bundle.couponCount}</span>
+                <span className="stat-number">{bundleCouponCount}</span>
                 <span className="stat-text">Coupons</span>
               </div>
               <div className="stat-divider"></div>
               <div className="stat-item">
-                <span className="stat-number">${bundle.totalSavings}</span>
+                <span className="stat-number">${typeof bundleTotalSavings === 'number' ? bundleTotalSavings.toFixed(2) : bundleTotalSavings}</span>
                 <span className="stat-text">Est. Savings</span>
               </div>
             </div>
@@ -2161,12 +2199,12 @@ const QuickBundlePage = () => {
                 </button>
               </div>
               
-              {showCoupons && (
+              {showCoupons && bundleCoupons.length > 0 && (
                 <div className="coupon-list">
-                  {bundle.coupons.map(coupon => (
-                    <div key={coupon.id} className="coupon-item">
+                  {bundleCoupons.map((coupon, index) => (
+                    <div key={coupon.id || index} className="coupon-item">
                       <div className="coupon-info">
-                        <span className="coupon-store">{getStoreName(coupon.storeId)}</span>
+                        <span className="coupon-store">{coupon.store_name || getStoreName(coupon.store_id || coupon.storeId)}</span>
                         <span className="coupon-title">{coupon.title}</span>
                         <span className="coupon-desc">{coupon.description}</span>
                       </div>
@@ -2174,6 +2212,12 @@ const QuickBundlePage = () => {
                     </div>
                   ))}
                 </div>
+              )}
+              
+              {showCoupons && bundleCoupons.length === 0 && (
+                <p style={{ color: '#718096', textAlign: 'center', padding: '20px' }}>
+                  No coupons available for selected stores yet.
+                </p>
               )}
             </div>
             
@@ -2192,14 +2236,15 @@ const QuickBundlePage = () => {
             <button 
               className="btn-secondary" 
               onClick={handleRefreshBundle}
+              disabled={loading}
               style={{ width: '100%', marginTop: '16px' }}
             >
-              ↻ Refresh Bundle
+              {loading ? '↻ Refreshing...' : '↻ Refresh Bundle'}
             </button>
           </div>
         )}
         
-        {!bundle && (
+        {!loading && !bundle && storesArray.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">🛒</div>
             <h3>Select Your Stores</h3>
@@ -2208,6 +2253,15 @@ const QuickBundlePage = () => {
               Select Stores
             </button>
           </div>
+        )}
+        
+        {!loading && !bundle && storesArray.length > 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">⏳</div>
+            <h3>Loading Bundle...</h3>
+            <p>Please wait while we fetch your coupons.</p>
+          </div>
+        )}
         )}
       </div>
     </div>
