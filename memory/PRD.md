@@ -37,6 +37,15 @@ Build a full-stack application called "ScanSavvy" - a smart savings assistant th
 ## What's Been Implemented
 
 ### March 18, 2026
+- [x] **Supabase Integration (REAL MVP):**
+  - Connected to Supabase PostgreSQL via Transaction Pooler
+  - Created 5 tables: stores, coupons, coupon_bundles, bundle_coupons, user_bundles
+  - Built coupon ingestion service (`/app/backend/services/coupon_ingestion.py`)
+  - Built bundle generation service (`/app/backend/services/bundle_generator.py`)
+  - Seeded Kroger with 12 real coupons ($32.63 total savings)
+  - Created bundle ID: E5F5FE79-DBE
+  - QR code now links to real database records
+  - Bundle page shows "REAL DATA" badge
 - [x] **QR Code Bug Fix:**
   - Fixed `undefined/api/bundle/...` URL issue 
   - Added `getBaseUrl()` with ENV var → window.location.origin fallback

@@ -508,242 +508,6 @@ async def refresh_user_bundle(user_id: str, request: Request):
         }
     }
 
-# ============== PUBLIC QR SCAN PAGE ==============
-
-@api_router.get("/bundle/{bundle_id}/view", response_class=HTMLResponse)
-async def view_bundle_page(bundle_id: str):
-    """Public page that displays when QR code is scanned"""
-    bundle = await db.bundles.find_one({"id": bundle_id}, {"_id": 0})
-    
-    if not bundle:
-        return HTMLResponse(content="""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Bundle Not Found - ScanSavvy</title>
-            <style>
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-                .container { background: white; border-radius: 16px; padding: 40px; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-                h1 { color: #1C2B3A; margin-bottom: 16px; }
-                p { color: #666; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>Bundle Not Found</h1>
-                <p>This coupon bundle may have expired or is no longer available.</p>
-            </div>
-        </body>
-        </html>
-        """, status_code=404)
-    
-    # Check if bundle is expired
-    valid_until = datetime.fromisoformat(bundle["valid_until"].replace("Z", "+00:00"))
-    now = datetime.now(timezone.utc)
-    is_expired = now > valid_until
-    
-    # Get user info
-    user = await db.users.find_one({"id": bundle["user_id"]}, {"_id": 0, "name": 1})
-    user_name = user.get("name", "User") if user else "User"
-    
-    # Build coupon HTML
-    coupons_html = ""
-    for coupon in bundle["coupons"]:
-        store_name = coupon.get("store_id", "Manufacturer").replace("-", " ").title() if coupon.get("store_id") else "Manufacturer Coupon"
-        savings_display = f"${coupon['savings_value']}" if coupon["savings_type"] == "dollar" else f"{coupon['savings_value']}% OFF" if coupon["savings_type"] == "percent" else "BOGO"
-        
-        coupons_html += f"""
-        <div class="coupon">
-            <div class="coupon-header">
-                <span class="store-name">{store_name}</span>
-                <span class="savings">{savings_display}</span>
-            </div>
-            <div class="coupon-title">{coupon['title']}</div>
-            <div class="coupon-desc">{coupon['description']}</div>
-        </div>
-        """
-    
-    # Expired banner
-    expired_banner = '<div class="expired-banner">⚠️ This bundle has expired</div>' if is_expired else ''
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ScanSavvy Coupon Bundle</title>
-        <style>
-            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-            body {{ 
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                background: linear-gradient(135deg, #1F2A44 0%, #2E3B5A 100%);
-                min-height: 100vh;
-                padding: 20px;
-            }}
-            .container {{ 
-                max-width: 500px; 
-                margin: 0 auto;
-            }}
-            .header {{
-                background: white;
-                border-radius: 16px 16px 0 0;
-                padding: 24px;
-                text-align: center;
-            }}
-            .logo {{
-                font-size: 28px;
-                font-weight: 700;
-                color: #1F2A44;
-                margin-bottom: 8px;
-            }}
-            .logo span {{ color: #1F2A44; }}
-            .user-name {{
-                color: #666;
-                font-size: 14px;
-            }}
-            .bundle-info {{
-                background: #f8f9fa;
-                padding: 20px 24px;
-            }}
-            .week-label {{
-                font-size: 18px;
-                font-weight: 600;
-                color: #1F2A44;
-                margin-bottom: 4px;
-            }}
-            .valid-until {{
-                color: #666;
-                font-size: 14px;
-                margin-bottom: 16px;
-            }}
-            .stats {{
-                display: flex;
-                gap: 16px;
-            }}
-            .stat {{
-                flex: 1;
-                background: white;
-                border-radius: 12px;
-                padding: 16px;
-                text-align: center;
-            }}
-            .stat-value {{
-                font-size: 24px;
-                font-weight: 700;
-                color: #1F2A44;
-            }}
-            .stat-label {{
-                font-size: 12px;
-                color: #666;
-                margin-top: 4px;
-            }}
-            .coupons {{
-                background: white;
-                border-radius: 0 0 16px 16px;
-                padding: 16px;
-            }}
-            .coupons-title {{
-                font-size: 16px;
-                font-weight: 600;
-                color: #1F2A44;
-                margin-bottom: 16px;
-                padding: 0 8px;
-            }}
-            .coupon {{
-                background: #f8f9fa;
-                border-radius: 12px;
-                padding: 16px;
-                margin-bottom: 12px;
-                border-left: 4px solid #1F2A44;
-            }}
-            .coupon:last-child {{ margin-bottom: 0; }}
-            .coupon-header {{
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 8px;
-            }}
-            .store-name {{
-                font-size: 12px;
-                color: #1F2A44;
-                font-weight: 600;
-                text-transform: uppercase;
-            }}
-            .savings {{
-                background: #1F2A44;
-                color: white;
-                padding: 4px 10px;
-                border-radius: 20px;
-                font-size: 12px;
-                font-weight: 600;
-            }}
-            .coupon-title {{
-                font-size: 16px;
-                font-weight: 600;
-                color: #1F2A44;
-                margin-bottom: 4px;
-            }}
-            .coupon-desc {{
-                font-size: 14px;
-                color: #666;
-            }}
-            .expired-banner {{
-                background: #fee2e2;
-                color: #dc2626;
-                text-align: center;
-                padding: 12px;
-                font-weight: 600;
-            }}
-            .footer {{
-                text-align: center;
-                padding: 24px;
-                color: white;
-                font-size: 14px;
-            }}
-            .footer a {{
-                color: white;
-                text-decoration: underline;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <div class="logo">Scan<span>Savvy</span></div>
-                <div class="user-name">{user_name}'s Coupon Bundle</div>
-            </div>
-            {expired_banner}
-            <div class="bundle-info">
-                <div class="week-label">{bundle['week_label']}</div>
-                <div class="valid-until">Valid until {valid_until.strftime('%B %d, %Y')}</div>
-                <div class="stats">
-                    <div class="stat">
-                        <div class="stat-value">{bundle['coupon_count']}</div>
-                        <div class="stat-label">Coupons</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value">${bundle['total_savings']}</div>
-                        <div class="stat-label">Est. Savings</div>
-                    </div>
-                </div>
-            </div>
-            <div class="coupons">
-                <div class="coupons-title">Included Coupons</div>
-                {coupons_html}
-            </div>
-            <div class="footer">
-                <p>Powered by <a href="https://scansavvy.app">ScanSavvy</a></p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return HTMLResponse(content=html_content)
 
 # ============== BEHAVIOR TRACKING ==============
 
@@ -850,7 +614,316 @@ async def get_coupon_bundles_legacy(user_id: str, request: Request):
         "total_store_bundles": len(bundle["stores_included"])
     }
 
-# Include router
+# ============== SUPABASE-BACKED ROUTES (REAL DATA) ==============
+from database import get_db, AsyncSessionLocal
+from models import Store, Coupon, CouponBundle, BundleCoupon, UserBundle
+from sqlalchemy import select, and_
+from sqlalchemy.orm import selectinload
+from services.bundle_generator import (
+    get_active_coupons, 
+    create_user_bundle, 
+    get_bundle_with_coupons,
+    get_week_label,
+    get_week_dates
+)
+
+@api_router.get("/supabase/stores")
+async def get_supabase_stores():
+    """Get all stores from Supabase"""
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Store).where(Store.is_active == True)
+        )
+        stores = result.scalars().all()
+        return {"stores": [s.to_dict() for s in stores]}
+
+@api_router.get("/supabase/stores/{store_id}/coupons")
+async def get_store_coupons(store_id: str):
+    """Get active coupons for a specific store"""
+    async with AsyncSessionLocal() as db:
+        coupons = await get_active_coupons(db, store_id)
+        return {
+            "store_id": store_id,
+            "coupon_count": len(coupons),
+            "coupons": [c.to_dict() for c in coupons]
+        }
+
+@api_router.get("/supabase/bundles/{bundle_id}")
+async def get_supabase_bundle(bundle_id: str):
+    """Get a bundle by ID from Supabase"""
+    async with AsyncSessionLocal() as db:
+        bundle_data = await get_bundle_with_coupons(db, bundle_id)
+        if not bundle_data:
+            raise HTTPException(status_code=404, detail="Bundle not found")
+        return bundle_data
+
+@api_router.post("/supabase/bundles/create")
+async def create_supabase_user_bundle(
+    store_ids: List[str],
+    user_name: str = "Guest",
+    user_email: str = None
+):
+    """Create a user bundle from selected stores"""
+    async with AsyncSessionLocal() as db:
+        user_bundle = await create_user_bundle(db, store_ids, user_name, user_email)
+        return {
+            "success": True,
+            "bundle_id": user_bundle.id,
+            "qr_url": f"/api/bundle/{user_bundle.id}/view"
+        }
+
+# ============== REAL BUNDLE VIEW PAGE (SUPABASE-BACKED) ==============
+@api_router.get("/bundle/{bundle_id}/view", response_class=HTMLResponse)
+async def view_bundle_page(bundle_id: str):
+    """Public page that displays when QR code is scanned - SUPABASE BACKED"""
+    
+    # First try Supabase
+    async with AsyncSessionLocal() as db:
+        bundle_data = await get_bundle_with_coupons(db, bundle_id)
+    
+    if bundle_data:
+        # REAL DATA FROM SUPABASE
+        is_expired = False
+        if bundle_data.get("valid_until"):
+            valid_until = datetime.fromisoformat(bundle_data["valid_until"])
+            is_expired = datetime.utcnow() > valid_until
+        
+        # Build coupon HTML
+        coupons_html = ""
+        for coupon in bundle_data.get("coupons", []):
+            store_name = coupon.get("store_name", "Kroger")
+            coupons_html += f"""
+            <div class="coupon">
+                <div class="coupon-header">
+                    <span class="store-name">{store_name}</span>
+                    <span class="savings">{coupon['discount']}</span>
+                </div>
+                <div class="coupon-title">{coupon['title']}</div>
+                <div class="coupon-desc">{coupon.get('description', '')}</div>
+                <div class="coupon-expiry">Expires: {coupon.get('expiry_date', 'N/A')}</div>
+            </div>
+            """
+        
+        # Determine display name
+        if bundle_data["type"] == "user_bundle":
+            user_name = bundle_data.get("user_name", "Guest")
+            stores_info = bundle_data.get("stores", [])
+            store_display = ", ".join([s["name"] for s in stores_info]) if stores_info else "Your Stores"
+        else:
+            user_name = "Shopper"
+            store_display = bundle_data.get("store_name", "Kroger")
+        
+        expired_banner = '<div class="expired-banner">This bundle has expired</div>' if is_expired else ''
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>ScanSavvy Coupon Bundle</title>
+            <style>
+                * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+                body {{ 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                    background: linear-gradient(135deg, #1F2A44 0%, #2E3B5A 100%);
+                    min-height: 100vh;
+                    padding: 20px;
+                }}
+                .container {{ max-width: 500px; margin: 0 auto; }}
+                .header {{
+                    background: white;
+                    border-radius: 16px 16px 0 0;
+                    padding: 24px;
+                    text-align: center;
+                }}
+                .logo {{ font-size: 28px; font-weight: 700; color: #1F2A44; margin-bottom: 8px; }}
+                .subtitle {{ color: #666; font-size: 14px; margin-bottom: 16px; }}
+                .stats {{
+                    display: flex;
+                    justify-content: center;
+                    gap: 24px;
+                    padding: 16px;
+                    background: #f8f9fa;
+                    border-radius: 12px;
+                }}
+                .stat {{ text-align: center; }}
+                .stat-value {{ font-size: 24px; font-weight: 700; color: #1F2A44; }}
+                .stat-label {{ font-size: 12px; color: #666; }}
+                .coupons {{
+                    background: white;
+                    border-radius: 0 0 16px 16px;
+                    padding: 16px;
+                }}
+                .coupon {{
+                    border: 1px solid #eee;
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin-bottom: 12px;
+                }}
+                .coupon-header {{
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                }}
+                .store-name {{ font-size: 12px; color: #666; font-weight: 500; }}
+                .savings {{
+                    background: #1F2A44;
+                    color: white;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 700;
+                }}
+                .coupon-title {{ font-weight: 600; color: #1F2A44; margin-bottom: 4px; }}
+                .coupon-desc {{ font-size: 14px; color: #666; }}
+                .coupon-expiry {{ font-size: 11px; color: #999; margin-top: 8px; }}
+                .expired-banner {{
+                    background: #fee2e2;
+                    color: #dc2626;
+                    padding: 12px;
+                    text-align: center;
+                    font-weight: 600;
+                }}
+                .footer {{
+                    text-align: center;
+                    padding: 20px;
+                    color: rgba(255,255,255,0.7);
+                    font-size: 14px;
+                }}
+                .real-data-badge {{
+                    background: #10b981;
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    margin-left: 8px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                {expired_banner}
+                <div class="header">
+                    <div class="logo">ScanSavvy <span class="real-data-badge">REAL DATA</span></div>
+                    <div class="subtitle">Hi {user_name}! Here's your bundle for {store_display}</div>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value">{bundle_data.get('coupon_count', len(bundle_data.get('coupons', [])))}</div>
+                            <div class="stat-label">Coupons</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${bundle_data.get('total_savings', 0):.2f}</div>
+                            <div class="stat-label">Potential Savings</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="coupons">
+                    {coupons_html}
+                </div>
+                <div class="footer">
+                    {bundle_data.get('week_label', '')} | Bundle ID: {bundle_id}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
+    
+    # Fallback to MongoDB if not in Supabase
+    bundle = await db.bundles.find_one({"id": bundle_id}, {"_id": 0})
+    
+    if not bundle:
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Bundle Not Found - ScanSavvy</title>
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: -apple-system, sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+                .container { background: white; border-radius: 16px; padding: 40px; text-align: center; max-width: 400px; }
+                h1 { color: #1C2B3A; margin-bottom: 16px; }
+                p { color: #666; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Bundle Not Found</h1>
+                <p>This coupon bundle may have expired or is no longer available.</p>
+            </div>
+        </body>
+        </html>
+        """, status_code=404)
+    
+    # MongoDB bundle rendering (legacy)
+    valid_until = datetime.fromisoformat(bundle["valid_until"].replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    is_expired = now > valid_until
+    
+    user = await db.users.find_one({"id": bundle["user_id"]}, {"_id": 0, "name": 1})
+    user_name = user.get("name", "User") if user else "User"
+    
+    coupons_html = ""
+    for coupon in bundle["coupons"]:
+        store_name = coupon.get("store_id", "Manufacturer").replace("-", " ").title()
+        savings_display = f"${coupon['savings_value']}" if coupon["savings_type"] == "dollar" else f"{coupon['savings_value']}% OFF"
+        
+        coupons_html += f"""
+        <div class="coupon">
+            <div class="coupon-header">
+                <span class="store-name">{store_name}</span>
+                <span class="savings">{savings_display}</span>
+            </div>
+            <div class="coupon-title">{coupon['title']}</div>
+            <div class="coupon-desc">{coupon['description']}</div>
+        </div>
+        """
+    
+    expired_banner = '<div class="expired-banner">This bundle has expired</div>' if is_expired else ''
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ScanSavvy Coupon Bundle</title>
+        <style>
+            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+            body {{ font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #1F2A44 0%, #2E3B5A 100%); min-height: 100vh; padding: 20px; }}
+            .container {{ max-width: 500px; margin: 0 auto; }}
+            .header {{ background: white; border-radius: 16px 16px 0 0; padding: 24px; text-align: center; }}
+            .logo {{ font-size: 28px; font-weight: 700; color: #1F2A44; }}
+            .coupons {{ background: white; border-radius: 0 0 16px 16px; padding: 16px; }}
+            .coupon {{ border: 1px solid #eee; border-radius: 12px; padding: 16px; margin-bottom: 12px; }}
+            .coupon-header {{ display: flex; justify-content: space-between; margin-bottom: 8px; }}
+            .store-name {{ font-size: 12px; color: #666; }}
+            .savings {{ background: #1F2A44; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }}
+            .coupon-title {{ font-weight: 600; color: #1F2A44; }}
+            .coupon-desc {{ font-size: 14px; color: #666; }}
+            .expired-banner {{ background: #fee2e2; color: #dc2626; padding: 12px; text-align: center; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            {expired_banner}
+            <div class="header">
+                <div class="logo">ScanSavvy</div>
+                <p>Hi {user_name}!</p>
+                <p>{bundle.get('week_label', '')} - {len(bundle['coupons'])} coupons - ${bundle.get('total_savings', 0):.2f} savings</p>
+            </div>
+            <div class="coupons">{coupons_html}</div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+# Include router AFTER all routes are defined
 app.include_router(api_router)
 
 app.add_middleware(
