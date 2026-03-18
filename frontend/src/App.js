@@ -327,16 +327,16 @@ const HomePage = ({ onGetStarted }) => {
             At checkout, scan once and save instantly.
           </p>
           <div className="hero-cta-group">
-            <button className="btn-primary btn-xl" onClick={() => setShowLocationModal(true)} data-testid="hero-cta">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+            <button className="btn-primary btn-xl" onClick={() => navigate('/onboarding')} data-testid="hero-cta">
+              Get My Weekly Coupons
+            </button>
+            <button className="btn-secondary-outline" onClick={() => setShowLocationModal(true)} data-testid="hero-location">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
               Find Stores Near Me
             </button>
-            <a href="#how-it-works" className="btn-link" data-testid="hero-learn-more">
-              See how it works →
-            </a>
           </div>
           <div className="hero-proof">
             <div className="proof-avatars">

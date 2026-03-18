@@ -131,6 +131,24 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   color: var(--primary);
   background: var(--primary-light);
 }
+.btn-secondary-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--primary);
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 2px solid var(--primary);
+  transition: all 0.2s;
+}
+.btn-secondary-outline:hover {
+  background: var(--primary);
+  color: white;
+}
 .btn-text {
   color: var(--text-medium);
   font-weight: 500;
