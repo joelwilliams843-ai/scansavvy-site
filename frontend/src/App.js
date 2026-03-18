@@ -814,22 +814,28 @@ const DEFAULT_STORES = [
 // Popular store IDs for quick selection
 const POPULAR_STORE_IDS = ["walmart", "target", "publix", "kroger", "cvs", "walgreens", "dollar-general"];
 
+// Key for tracking if user has made selections in this session
+const ONBOARDING_SESSION_KEY = 'scansavvy_onboarding_session';
+
 const OnboardingPage = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedStores, setSelectedStores] = useState([]);
+  const [selectedStores, setSelectedStores] = useState([]); // Always start empty
   const [manufacturerCoupons, setManufacturerCoupons] = useState(false);
   const [notificationMethod, setNotificationMethod] = useState("push");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [stores, setStores] = useState(DEFAULT_STORES);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [storesLoading, setStoresLoading] = useState(true);
   const [error, setError] = useState("");
-  const [locationStatus, setLocationStatus] = useState("idle"); // idle, loading, found, denied
+  const [fieldErrors, setFieldErrors] = useState({}); // For inline validation
+  const [locationStatus, setLocationStatus] = useState("idle");
   const [nearbyLabel, setNearbyLabel] = useState(false);
+  const navigate = useNavigate();
   
-  // Load stores from API with fallback
+  // Load stores from API with fallback - DO NOT auto-restore selections
   useEffect(() => {
     const fetchStores = async () => {
       setStoresLoading(true);
@@ -850,19 +856,25 @@ const OnboardingPage = ({ onComplete }) => {
     };
     fetchStores();
     
-    // Restore selected stores from localStorage
-    const savedStores = loadFromLocalStorage(STORAGE_KEYS.SELECTED_STORES, []);
-    if (savedStores && Array.isArray(savedStores) && savedStores.length > 0) {
-      setSelectedStores(savedStores);
+    // Only restore selections if user explicitly saved them in a PREVIOUS completed session
+    // Check for a flag that indicates completed onboarding
+    const hasCompletedOnboarding = loadFromLocalStorage('scansavvy_onboarding_completed', false);
+    if (hasCompletedOnboarding) {
+      const savedStores = loadFromLocalStorage(STORAGE_KEYS.SELECTED_STORES, []);
+      if (savedStores && Array.isArray(savedStores) && savedStores.length > 0) {
+        setSelectedStores(savedStores);
+      }
     }
+    // If no completed onboarding, start fresh with empty selection
   }, []);
   
-  // Save selected stores to localStorage whenever they change
+  // Save selected stores to localStorage only when user makes changes (not on initial load)
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
   useEffect(() => {
-    if (selectedStores.length > 0) {
+    if (userHasInteracted && selectedStores.length >= 0) {
       saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
     }
-  }, [selectedStores]);
+  }, [selectedStores, userHasInteracted]);
   
   // Filter stores based on search term
   const allStores = stores || DEFAULT_STORES;
@@ -888,16 +900,21 @@ const OnboardingPage = ({ onComplete }) => {
   };
   
   const toggleStore = (storeId) => {
+    setUserHasInteracted(true);
     setSelectedStores(prev => {
       const current = prev || [];
-      const newSelection = current.includes(storeId) 
-        ? current.filter(id => id !== storeId)
-        : [...current, storeId];
-      return newSelection;
+      // Prevent duplicates
+      if (current.includes(storeId)) {
+        return current.filter(id => id !== storeId);
+      } else {
+        return [...current, storeId];
+      }
     });
+    setError(""); // Clear any error when user interacts
   };
   
   const removeStore = (storeId) => {
+    setUserHasInteracted(true);
     setSelectedStores(prev => (prev || []).filter(id => id !== storeId));
   };
   
@@ -907,7 +924,6 @@ const OnboardingPage = ({ onComplete }) => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => {
-          // Simulate reordering based on location (in production, use real distance)
           setTimeout(() => {
             setNearbyLabel(true);
             setLocationStatus("found");
@@ -925,20 +941,42 @@ const OnboardingPage = ({ onComplete }) => {
     }
   };
   
+  // Validate phone number
+  const validatePhone = (phone) => {
+    const cleaned = phone.replace(/\D/g, '');
+    return cleaned.length >= 10;
+  };
+  
+  // Validate email
+  const validateEmail = (emailStr) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
+  };
+  
+  // Handle final submission with MVP fallback
   const handleSubmit = async () => {
-    if (!name.trim() || !email.trim()) {
-      setError("Please enter your name and email");
+    setFieldErrors({});
+    setError("");
+    
+    // Validate based on notification method
+    if (notificationMethod === 'sms' && !validatePhone(phoneNumber)) {
+      setFieldErrors({ phone: "Please enter a valid 10-digit phone number" });
       return;
     }
+    
+    if (notificationMethod === 'email' && !validateEmail(email)) {
+      setFieldErrors({ email: "Please enter a valid email address" });
+      return;
+    }
+    
     if (selectedStores.length === 0) {
-      setError("Please select at least one store");
+      setError("Please select at least one store first");
       return;
     }
     
     setLoading(true);
-    setError("");
     
     try {
+      // Try to create user via API
       const userRes = await axios.post(`${API}/users`, { name, email });
       const userId = userRes.data.id;
       
@@ -947,13 +985,36 @@ const OnboardingPage = ({ onComplete }) => {
       await axios.put(`${API}/users/${userId}/notification-method`, { method: notificationMethod });
       
       const updatedUser = await axios.get(`${API}/users/${userId}`);
+      
+      // Mark onboarding as completed
+      saveToLocalStorage('scansavvy_onboarding_completed', true);
+      saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+      
       onComplete(updatedUser.data);
     } catch (e) {
-      console.error("Failed to create user", e);
-      setError("Something went wrong. Please try again.");
+      console.error("API error, falling back to local MVP", e);
+      
+      // MVP Fallback: Save locally and proceed to bundle page
+      const localBundle = generateLocalBundle(selectedStores);
+      saveToLocalStorage(STORAGE_KEYS.CURRENT_BUNDLE, localBundle);
+      saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+      saveToLocalStorage('scansavvy_onboarding_completed', true);
+      saveToLocalStorage('scansavvy_notification_method', notificationMethod);
+      if (notificationMethod === 'sms') {
+        saveToLocalStorage('scansavvy_phone', phoneNumber);
+      }
+      
+      // Navigate to bundle page directly
+      navigate('/bundle');
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Handle notification method change
+  const handleNotificationChange = (method) => {
+    setNotificationMethod(method);
+    setFieldErrors({}); // Clear field errors when switching
   };
   
   return (
@@ -1244,7 +1305,7 @@ const OnboardingPage = ({ onComplete }) => {
         {step === 3 && (
           <div className="onboarding-step" data-testid="onboarding-step-3">
             <h2>Almost done!</h2>
-            <p className="step-subtitle">Just a couple more options to customize your experience.</p>
+            <p className="step-subtitle">Choose how you'd like to receive your weekly coupon bundle.</p>
             
             <div className="option-card" data-testid="manufacturer-toggle">
               <div className="option-info">
@@ -1264,54 +1325,154 @@ const OnboardingPage = ({ onComplete }) => {
             
             <div className="option-section">
               <h4>How should we notify you when your weekly QR is ready?</h4>
-              <div className="notification-options" data-testid="notification-options">
-                <label className={`notification-option ${notificationMethod === 'push' ? 'selected' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="notification" 
-                    value="push"
-                    checked={notificationMethod === 'push'}
-                    onChange={e => setNotificationMethod(e.target.value)}
-                  />
-                  <span className="option-icon">📲</span>
-                  <span className="option-label">Push Notification</span>
-                </label>
-                <label className={`notification-option ${notificationMethod === 'sms' ? 'selected' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="notification" 
-                    value="sms"
-                    checked={notificationMethod === 'sms'}
-                    onChange={e => setNotificationMethod(e.target.value)}
-                  />
-                  <span className="option-icon">💬</span>
-                  <span className="option-label">Text Message</span>
-                </label>
-                <label className={`notification-option ${notificationMethod === 'email' ? 'selected' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="notification" 
-                    value="email"
-                    checked={notificationMethod === 'email'}
-                    onChange={e => setNotificationMethod(e.target.value)}
-                  />
-                  <span className="option-icon">📧</span>
-                  <span className="option-label">Email</span>
-                </label>
+              <div className="notification-options-enhanced" data-testid="notification-options">
+                <div 
+                  className={`notification-card ${notificationMethod === 'push' ? 'selected' : ''}`}
+                  onClick={() => handleNotificationChange('push')}
+                  data-testid="notification-push"
+                >
+                  <div className="notification-card-icon">📲</div>
+                  <div className="notification-card-content">
+                    <span className="notification-card-title">Push Notification</span>
+                    <span className="notification-card-desc">Get notified instantly on your device</span>
+                  </div>
+                  <div className="notification-card-check">
+                    {notificationMethod === 'push' && (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                
+                <div 
+                  className={`notification-card ${notificationMethod === 'sms' ? 'selected' : ''}`}
+                  onClick={() => handleNotificationChange('sms')}
+                  data-testid="notification-sms"
+                >
+                  <div className="notification-card-icon">💬</div>
+                  <div className="notification-card-content">
+                    <span className="notification-card-title">Text Message</span>
+                    <span className="notification-card-desc">Receive SMS with your QR link</span>
+                  </div>
+                  <div className="notification-card-check">
+                    {notificationMethod === 'sms' && (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                
+                <div 
+                  className={`notification-card ${notificationMethod === 'email' ? 'selected' : ''}`}
+                  onClick={() => handleNotificationChange('email')}
+                  data-testid="notification-email"
+                >
+                  <div className="notification-card-icon">📧</div>
+                  <div className="notification-card-content">
+                    <span className="notification-card-title">Email</span>
+                    <span className="notification-card-desc">Weekly email with your coupon bundle</span>
+                  </div>
+                  <div className="notification-card-check">
+                    {notificationMethod === 'email' && (
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
               </div>
+              
+              {/* Conditional Input for SMS */}
+              {notificationMethod === 'sms' && (
+                <div className="conditional-input-section" data-testid="phone-input-section">
+                  <label htmlFor="phone">Your Phone Number</label>
+                  <input 
+                    type="tel"
+                    id="phone"
+                    value={phoneNumber}
+                    onChange={e => {
+                      const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setPhoneNumber(cleaned);
+                      if (fieldErrors.phone) setFieldErrors({});
+                    }}
+                    placeholder="(555) 123-4567"
+                    className={fieldErrors.phone ? 'input-error' : ''}
+                    data-testid="input-phone"
+                  />
+                  {fieldErrors.phone && (
+                    <span className="field-error">{fieldErrors.phone}</span>
+                  )}
+                  <p className="input-hint">We'll text you when your weekly QR is ready</p>
+                </div>
+              )}
+              
+              {/* Conditional hint for Email */}
+              {notificationMethod === 'email' && (
+                <div className="conditional-input-section" data-testid="email-confirm-section">
+                  <div className="email-confirm-box">
+                    <span className="email-icon">✉️</span>
+                    <div className="email-confirm-text">
+                      <span className="email-address">{email || 'your@email.com'}</span>
+                      <span className="email-hint">We'll send your weekly QR to this email</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Hint for Push */}
+              {notificationMethod === 'push' && (
+                <div className="conditional-input-section" data-testid="push-hint-section">
+                  <div className="push-hint-box">
+                    <span className="push-icon">🔔</span>
+                    <span className="push-hint-text">We'll ask for notification permission when your first bundle is ready</span>
+                  </div>
+                </div>
+              )}
             </div>
             
             {error && <p className="error-message">{error}</p>}
             
+            {/* Summary */}
+            <div className="onboarding-summary">
+              <h4>Your Setup</h4>
+              <div className="summary-row">
+                <span className="summary-label">Stores:</span>
+                <span className="summary-value">{selectedStores.length} selected</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">Notifications:</span>
+                <span className="summary-value">
+                  {notificationMethod === 'push' && '📲 Push'}
+                  {notificationMethod === 'sms' && '💬 Text'}
+                  {notificationMethod === 'email' && '📧 Email'}
+                </span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">Manufacturer coupons:</span>
+                <span className="summary-value">{manufacturerCoupons ? '✓ Included' : '✗ Not included'}</span>
+              </div>
+            </div>
+            
             <div className="step-actions">
-              <button className="btn-text" onClick={() => setStep(2)}>Back</button>
+              <button className="btn-text" onClick={() => setStep(2)} data-testid="btn-back-step3">
+                ← Back
+              </button>
               <button 
-                className="btn-primary" 
+                className="btn-primary btn-finish" 
                 onClick={handleSubmit}
                 disabled={loading}
                 data-testid="btn-finish-setup"
               >
-                {loading ? "Setting up..." : "Get My Coupons"}
+                {loading ? (
+                  <>
+                    <span className="spinner-small"></span>
+                    Setting up...
+                  </>
+                ) : (
+                  "Get My Coupons →"
+                )}
               </button>
             </div>
           </div>

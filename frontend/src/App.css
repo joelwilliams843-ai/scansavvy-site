@@ -1709,6 +1709,213 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .option-icon { font-size: 1.5rem; display: block; margin-bottom: 8px; }
 .option-label { font-size: 0.85rem; font-weight: 500; color: var(--text-dark); }
 
+/* ============== ENHANCED NOTIFICATION OPTIONS (Step 3) ============== */
+.notification-options-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.notification-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notification-card:hover {
+  border-color: var(--primary);
+  background: var(--gray-50);
+}
+
+.notification-card.selected {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(31, 42, 68, 0.03) 0%, rgba(31, 42, 68, 0.08) 100%);
+}
+
+.notification-card-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.notification-card-content {
+  flex: 1;
+  text-align: left;
+}
+
+.notification-card-title {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+}
+
+.notification-card-desc {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.notification-card-check {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+/* Conditional Input Sections */
+.conditional-input-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.conditional-input-section label {
+  display: block;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.conditional-input-section input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.conditional-input-section input:focus {
+  border-color: var(--primary);
+}
+
+.conditional-input-section input.input-error {
+  border-color: #ef4444;
+}
+
+.field-error {
+  display: block;
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.input-hint {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Email Confirm Box */
+.email-confirm-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.email-icon {
+  font-size: 1.5rem;
+}
+
+.email-confirm-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.email-address {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.email-hint {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+/* Push Hint Box */
+.push-hint-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.push-icon {
+  font-size: 1.5rem;
+}
+
+.push-hint-text {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+/* Onboarding Summary */
+.onboarding-summary {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.onboarding-summary h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+.summary-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* Finish Button */
+.btn-finish {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 180px;
+}
+
 /* ============== DASHBOARD ============== */
 .dashboard-page {
   min-height: 100vh;
