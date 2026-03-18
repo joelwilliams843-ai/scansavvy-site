@@ -795,6 +795,25 @@ const HomePage = ({ onGetStarted }) => {
 };
 
 // Onboarding Page
+// Default fallback stores if API fails
+const DEFAULT_STORES = [
+  { id: "walmart", name: "Walmart", logo: "🛒", color: "#0071DC", category: "Superstore" },
+  { id: "target", name: "Target", logo: "🎯", color: "#CC0000", category: "Superstore" },
+  { id: "kroger", name: "Kroger", logo: "🥬", color: "#0C3E80", category: "Grocery" },
+  { id: "publix", name: "Publix", logo: "🛍️", color: "#3B8C3B", category: "Grocery" },
+  { id: "cvs", name: "CVS", logo: "💊", color: "#CC0000", category: "Pharmacy" },
+  { id: "walgreens", name: "Walgreens", logo: "💊", color: "#E31837", category: "Pharmacy" },
+  { id: "dollar-general", name: "Dollar General", logo: "💵", color: "#FFC220", category: "Discount" },
+  { id: "costco", name: "Costco", logo: "📦", color: "#E31837", category: "Wholesale" },
+  { id: "aldi", name: "Aldi", logo: "🛒", color: "#00529B", category: "Grocery" },
+  { id: "safeway", name: "Safeway", logo: "🥗", color: "#E8322E", category: "Grocery" },
+  { id: "whole-foods", name: "Whole Foods", logo: "🥑", color: "#00674B", category: "Grocery" },
+  { id: "trader-joes", name: "Trader Joe's", logo: "🌻", color: "#B5121B", category: "Grocery" },
+];
+
+// Popular store IDs for quick selection
+const POPULAR_STORE_IDS = ["walmart", "target", "publix", "kroger", "cvs", "walgreens", "dollar-general"];
+
 const OnboardingPage = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -802,34 +821,108 @@ const OnboardingPage = ({ onComplete }) => {
   const [selectedStores, setSelectedStores] = useState([]);
   const [manufacturerCoupons, setManufacturerCoupons] = useState(false);
   const [notificationMethod, setNotificationMethod] = useState("push");
-  const [stores, setStores] = useState([]);
+  const [stores, setStores] = useState(DEFAULT_STORES);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [storesLoading, setStoresLoading] = useState(true);
   const [error, setError] = useState("");
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle, loading, found, denied
+  const [nearbyLabel, setNearbyLabel] = useState(false);
   
+  // Load stores from API with fallback
   useEffect(() => {
     const fetchStores = async () => {
+      setStoresLoading(true);
       try {
         const response = await axios.get(`${API}/stores`);
-        setStores(response.data.stores || []);
+        const apiStores = response.data?.stores;
+        if (apiStores && Array.isArray(apiStores) && apiStores.length > 0) {
+          setStores(apiStores);
+        } else {
+          setStores(DEFAULT_STORES);
+        }
       } catch (e) {
-        console.error("Failed to fetch stores", e);
+        console.error("Failed to fetch stores, using defaults", e);
+        setStores(DEFAULT_STORES);
+      } finally {
+        setStoresLoading(false);
       }
     };
     fetchStores();
+    
+    // Restore selected stores from localStorage
+    const savedStores = loadFromLocalStorage(STORAGE_KEYS.SELECTED_STORES, []);
+    if (savedStores && Array.isArray(savedStores) && savedStores.length > 0) {
+      setSelectedStores(savedStores);
+    }
   }, []);
   
-  const filteredStores = (stores || []).filter(store => 
-    store.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Save selected stores to localStorage whenever they change
+  useEffect(() => {
+    if (selectedStores.length > 0) {
+      saveToLocalStorage(STORAGE_KEYS.SELECTED_STORES, selectedStores);
+    }
+  }, [selectedStores]);
+  
+  // Filter stores based on search term
+  const allStores = stores || DEFAULT_STORES;
+  const filteredStores = searchTerm.trim() 
+    ? allStores.filter(store => 
+        store.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+  
+  // Popular stores (always visible)
+  const popularStores = allStores.filter(store => 
+    POPULAR_STORE_IDS.includes(store.id)
   );
+  
+  // All other stores (for "More Stores" section)
+  const otherStores = allStores.filter(store => 
+    !POPULAR_STORE_IDS.includes(store.id)
+  );
+  
+  // Get store details by ID
+  const getStoreById = (storeId) => {
+    return allStores.find(s => s.id === storeId) || { id: storeId, name: storeId, logo: "🏪", color: "#666" };
+  };
   
   const toggleStore = (storeId) => {
     setSelectedStores(prev => {
       const current = prev || [];
-      return current.includes(storeId) 
+      const newSelection = current.includes(storeId) 
         ? current.filter(id => id !== storeId)
         : [...current, storeId];
+      return newSelection;
     });
+  };
+  
+  const removeStore = (storeId) => {
+    setSelectedStores(prev => (prev || []).filter(id => id !== storeId));
+  };
+  
+  // Handle location-based store sorting (optional enhancement)
+  const handleGetLocation = () => {
+    setLocationStatus("loading");
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          // Simulate reordering based on location (in production, use real distance)
+          setTimeout(() => {
+            setNearbyLabel(true);
+            setLocationStatus("found");
+          }, 800);
+        },
+        () => {
+          setLocationStatus("denied");
+          setTimeout(() => setLocationStatus("idle"), 2000);
+        },
+        { timeout: 5000 }
+      );
+    } else {
+      setLocationStatus("denied");
+      setTimeout(() => setLocationStatus("idle"), 2000);
+    }
   };
   
   const handleSubmit = async () => {
@@ -923,48 +1016,212 @@ const OnboardingPage = ({ onComplete }) => {
         )}
         
         {step === 2 && (
-          <div className="onboarding-step" data-testid="onboarding-step-2">
+          <div className="onboarding-step step-2-stores" data-testid="onboarding-step-2">
             <h2>Pick your stores</h2>
-            <p className="step-subtitle">Select the stores you shop at. We'll bundle ALL available coupons into your weekly QR.</p>
+            <p className="step-subtitle">Tap the stores you shop at. We'll bundle ALL their coupons into your weekly QR.</p>
             
-            <div className="search-box">
-              <span className="search-icon">🔍</span>
-              <input 
-                type="text"
-                placeholder="Search stores..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                data-testid="store-search"
-              />
-            </div>
+            {/* Selected Stores Pills */}
+            {selectedStores.length > 0 && (
+              <div className="selected-stores-section" data-testid="selected-stores-section">
+                <div className="selected-stores-header">
+                  <span className="selected-badge">{selectedStores.length} selected</span>
+                </div>
+                <div className="selected-stores-pills">
+                  {selectedStores.map(storeId => {
+                    const store = getStoreById(storeId);
+                    return (
+                      <div 
+                        key={storeId} 
+                        className="store-pill"
+                        style={{ borderColor: store.color }}
+                        data-testid={`selected-pill-${storeId}`}
+                      >
+                        <span className="pill-logo">{store.logo}</span>
+                        <span className="pill-name">{store.name}</span>
+                        <button 
+                          className="pill-remove" 
+                          onClick={() => removeStore(storeId)}
+                          aria-label={`Remove ${store.name}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             
-            <div className="selected-count">
-              {selectedStores.length} store{selectedStores.length !== 1 ? 's' : ''} selected
-            </div>
-            
-            <div className="store-grid" data-testid="store-grid">
-              {filteredStores.map(store => (
-                <div 
-                  key={store.id}
-                  className={`store-card ${selectedStores.includes(store.id) ? 'selected' : ''}`}
-                  onClick={() => toggleStore(store.id)}
-                  data-testid={`store-${store.id}`}
-                >
-                  <div className="store-logo">{store.logo}</div>
-                  <div className="store-name">{store.name}</div>
-                  {selectedStores.includes(store.id) && (
-                    <div className="store-check">✓</div>
+            {/* Search Bar with Dropdown */}
+            <div className="store-search-container">
+              <div className="search-box-enhanced">
+                <svg className="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input 
+                  type="text"
+                  placeholder="Search for a store..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  data-testid="store-search"
+                  autoComplete="off"
+                />
+                {searchTerm && (
+                  <button 
+                    className="search-clear" 
+                    onClick={() => setSearchTerm("")}
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              
+              {/* Search Results Dropdown */}
+              {searchTerm.trim() && (
+                <div className="search-dropdown" data-testid="search-dropdown">
+                  {filteredStores.length > 0 ? (
+                    filteredStores.map(store => (
+                      <div 
+                        key={store.id}
+                        className={`search-result-item ${selectedStores.includes(store.id) ? 'selected' : ''}`}
+                        onClick={() => {
+                          toggleStore(store.id);
+                          setSearchTerm("");
+                        }}
+                        data-testid={`search-result-${store.id}`}
+                      >
+                        <span className="result-logo" style={{ backgroundColor: store.color }}>{store.logo}</span>
+                        <span className="result-name">{store.name}</span>
+                        {selectedStores.includes(store.id) && (
+                          <span className="result-check">✓</span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="search-no-results">No stores found for "{searchTerm}"</div>
                   )}
                 </div>
-              ))}
+              )}
             </div>
+            
+            {/* Optional Location Button */}
+            <div className="location-row">
+              <button 
+                className={`location-btn ${locationStatus === 'found' ? 'found' : ''}`}
+                onClick={handleGetLocation}
+                disabled={locationStatus === 'loading'}
+                data-testid="location-btn"
+              >
+                {locationStatus === 'loading' ? (
+                  <>
+                    <span className="spinner-small"></span>
+                    Finding nearby stores...
+                  </>
+                ) : locationStatus === 'found' ? (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Showing stores near you
+                  </>
+                ) : locationStatus === 'denied' ? (
+                  <>Location unavailable</>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Show stores near me
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {/* Popular Stores Section */}
+            <div className="stores-section">
+              <h3 className="stores-section-title">
+                {nearbyLabel ? '📍 Popular Near You' : '⭐ Popular Stores'}
+              </h3>
+              <p className="stores-section-subtitle">Tap to select</p>
+              
+              {storesLoading ? (
+                <div className="stores-loading">
+                  <div className="spinner-small"></div>
+                  <span>Loading stores...</span>
+                </div>
+              ) : (
+                <div className="store-grid-enhanced" data-testid="popular-store-grid">
+                  {popularStores.map(store => (
+                    <div 
+                      key={store.id}
+                      className={`store-card-enhanced ${selectedStores.includes(store.id) ? 'selected' : ''}`}
+                      onClick={() => toggleStore(store.id)}
+                      style={{ '--store-color': store.color }}
+                      data-testid={`store-${store.id}`}
+                    >
+                      <div className="store-card-logo" style={{ backgroundColor: store.color }}>
+                        {store.logo}
+                      </div>
+                      <div className="store-card-name">{store.name}</div>
+                      <div className="store-card-check">
+                        {selectedStores.includes(store.id) ? (
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        ) : (
+                          <div className="store-card-circle"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* More Stores Section */}
+            {otherStores.length > 0 && (
+              <div className="stores-section more-stores">
+                <h3 className="stores-section-title">More Stores</h3>
+                <div className="store-grid-enhanced compact" data-testid="more-store-grid">
+                  {otherStores.map(store => (
+                    <div 
+                      key={store.id}
+                      className={`store-card-enhanced ${selectedStores.includes(store.id) ? 'selected' : ''}`}
+                      onClick={() => toggleStore(store.id)}
+                      style={{ '--store-color': store.color }}
+                      data-testid={`store-${store.id}`}
+                    >
+                      <div className="store-card-logo" style={{ backgroundColor: store.color }}>
+                        {store.logo}
+                      </div>
+                      <div className="store-card-name">{store.name}</div>
+                      <div className="store-card-check">
+                        {selectedStores.includes(store.id) ? (
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        ) : (
+                          <div className="store-card-circle"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {error && <p className="error-message">{error}</p>}
             
-            <div className="step-actions">
-              <button className="btn-text" onClick={() => setStep(1)}>Back</button>
+            {/* Fixed Bottom Actions */}
+            <div className="step-actions-fixed">
+              <button className="btn-text" onClick={() => setStep(1)} data-testid="btn-back">
+                ← Back
+              </button>
               <button 
-                className="btn-primary" 
+                className={`btn-primary btn-continue ${selectedStores.length === 0 ? 'disabled' : ''}`}
                 onClick={() => {
                   if (selectedStores.length > 0) {
                     setError("");
@@ -973,9 +1230,12 @@ const OnboardingPage = ({ onComplete }) => {
                     setError("Please select at least one store");
                   }
                 }}
+                disabled={selectedStores.length === 0}
                 data-testid="btn-continue-stores"
               >
-                Continue ({selectedStores.length} stores)
+                {selectedStores.length === 0 
+                  ? 'Select stores to continue' 
+                  : `Continue with ${selectedStores.length} store${selectedStores.length !== 1 ? 's' : ''}`}
               </button>
             </div>
           </div>
